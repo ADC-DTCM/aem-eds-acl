@@ -35,7 +35,15 @@
       {
         "component": "text",
         "name": "imageAlt",
-        "label": "Alt Text"
+        "label": "Alt Text",
+        "valueType": "string"
+      },
+      {
+        "component": "text",
+        "name": "imageUrl",
+        "label": "Image URL",
+        "valueType": "string",
+        "value": ""
       }
     ]
   },
