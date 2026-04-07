@@ -200,51 +200,23 @@
       {
         "component": "text",
         "valueType": "string",
-        "name": "yesLabel",
+        "name": "confirmText",
         "label": "Yes Button Label",
         "value": "Yes"
       },
       {
         "component": "text",
         "valueType": "string",
-        "name": "noLabel",
+        "name": "denyText",
         "label": "No Button Label",
         "value": "No"
       },
       {
         "component": "text",
         "valueType": "string",
-        "name": "negativeTitle",
-        "label": "Negative Feedback Title",
+        "name": "formHeading",
+        "label": "Feedback Form Title",
         "value": "Page-level feedback"
-      },
-      {
-        "component": "text",
-        "valueType": "string",
-        "name": "negativeLabel",
-        "label": "Negative Feedback Message",
-        "value": "Sorry about that. How can we improve the information?"
-      },
-      {
-        "component": "text",
-        "valueType": "string",
-        "name": "submitLabel",
-        "label": "Submit Button Label",
-        "value": "Submit"
-      },
-      {
-        "component": "text",
-        "valueType": "string",
-        "name": "yesMessage",
-        "label": "Yes Thank You Message",
-        "value": "Great - thanks for your feedback."
-      },
-      {
-        "component": "text",
-        "valueType": "string",
-        "name": "noMessage",
-        "label": "Submit Thank You Message",
-        "value": "Thanks for your feedback – it's been sent to our web team."
       }
     ]
   },

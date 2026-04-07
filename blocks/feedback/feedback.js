@@ -17,16 +17,12 @@ function parseBlockContent(block) {
     return cell ? cell.textContent.trim() : '';
   }).filter(Boolean);
   if (!cells.length) return {};
-  const [question, yesLabel, noLabel, negTitle, negLabel, submitLbl, yesMsg, noMsg] = cells;
+  const [question, confirmText, denyText, formHeading] = cells;
   const parsed = {};
   if (question) parsed.question = question;
-  if (yesLabel) parsed.yesLabel = yesLabel;
-  if (noLabel) parsed.noLabel = noLabel;
-  if (negTitle) parsed.negativeTitle = negTitle;
-  if (negLabel) parsed.negativeLabel = negLabel;
-  if (submitLbl) parsed.submitLabel = submitLbl;
-  if (yesMsg) parsed.yesMessage = yesMsg;
-  if (noMsg) parsed.noMessage = noMsg;
+  if (confirmText) parsed.yesLabel = confirmText;
+  if (denyText) parsed.noLabel = denyText;
+  if (formHeading) parsed.negativeTitle = formHeading;
   return parsed;
 }
 
