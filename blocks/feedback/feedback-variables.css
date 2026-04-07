@@ -12,4 +12,6 @@
   --feedback-btn-line-height: 1.5;
   --feedback-btn-border-radius: 0;
   --feedback-thankyou-color: var(--primary-color);
+  --feedback-negative-title-font-size: 2.375rem;
+  --feedback-border-color: #ccc;
 }

@@ -1,27 +1,61 @@
-export default function decorate(block) {
+const DEFAULTS = {
+  question: 'Was this information helpful?',
+  yesLabel: 'Yes',
+  noLabel: 'No',
+  negativeTitle: 'Page-level feedback',
+  negativeLabel: 'Sorry about that. How can we improve the information?',
+  submitLabel: 'Submit',
+  yesMessage: 'Great - thanks for your feedback.',
+  noMessage: 'Thanks for your feedback \u2013 it\u2019s been sent to our web team.',
+};
+
+function parseBlockContent(block) {
+  const rows = [...block.children];
+  if (!rows.length) return {};
+  const cells = rows.map((row) => {
+    const cell = row.querySelector('div');
+    return cell ? cell.textContent.trim() : '';
+  }).filter(Boolean);
+  if (!cells.length) return {};
+  const [question, yesLabel, noLabel, negTitle, negLabel, submitLbl, yesMsg, noMsg] = cells;
+  const parsed = {};
+  if (question) parsed.question = question;
+  if (yesLabel) parsed.yesLabel = yesLabel;
+  if (noLabel) parsed.noLabel = noLabel;
+  if (negTitle) parsed.negativeTitle = negTitle;
+  if (negLabel) parsed.negativeLabel = negLabel;
+  if (submitLbl) parsed.submitLabel = submitLbl;
+  if (yesMsg) parsed.yesMessage = yesMsg;
+  if (noMsg) parsed.noMessage = noMsg;
+  return parsed;
+}
+
+export default function decorate(block, content = {}) {
+  // if no content passed, parse from block DOM (standalone block)
+  const authored = Object.keys(content).length ? content : parseBlockContent(block);
+  const config = { ...DEFAULTS, ...authored };
   const wrapper = document.createElement('div');
   wrapper.classList.add('feedback-wrapper');
 
   const question = document.createElement('p');
   question.classList.add('feedback-question');
-  question.textContent = 'Was this information helpful?';
+  question.textContent = config.question;
 
   const buttons = document.createElement('div');
   buttons.classList.add('feedback-buttons');
 
   const yesBtn = document.createElement('button');
   yesBtn.classList.add('primary');
-  yesBtn.textContent = 'Yes';
-  yesBtn.setAttribute('aria-label', 'Yes, this was helpful');
+  yesBtn.textContent = config.yesLabel;
+  yesBtn.setAttribute('aria-label', config.yesLabel);
 
   const noBtn = document.createElement('button');
   noBtn.classList.add('primary');
-  noBtn.textContent = 'No';
-  noBtn.setAttribute('aria-label', 'No, this was not helpful');
+  noBtn.textContent = config.noLabel;
+  noBtn.setAttribute('aria-label', config.noLabel);
 
   const thankYou = document.createElement('p');
   thankYou.classList.add('feedback-thankyou');
-  thankYou.textContent = 'Thanks for your feedback – it\'s been sent to our web team.';
   thankYou.setAttribute('aria-live', 'polite');
 
   // negative feedback form
@@ -31,26 +65,26 @@ export default function decorate(block) {
 
   const negativeTitle = document.createElement('p');
   negativeTitle.classList.add('feedback-negative-title');
-  negativeTitle.textContent = 'Page-level feedback';
+  negativeTitle.textContent = config.negativeTitle;
 
   const negativeLabel = document.createElement('p');
   negativeLabel.classList.add('feedback-negative-label');
-  negativeLabel.textContent = 'Sorry about that. How can we improve the information?';
+  negativeLabel.textContent = config.negativeLabel;
 
   const negativeTextarea = document.createElement('textarea');
   negativeTextarea.classList.add('feedback-negative-textarea');
   negativeTextarea.setAttribute('rows', '4');
-  negativeTextarea.setAttribute('aria-label', 'How can we improve the information?');
+  negativeTextarea.setAttribute('aria-label', config.negativeLabel);
 
   const submitBtn = document.createElement('button');
   submitBtn.classList.add('primary', 'feedback-submit');
-  submitBtn.textContent = 'Submit';
+  submitBtn.textContent = config.submitLabel;
 
   negativeFeedback.append(negativeTitle, negativeLabel, negativeTextarea, submitBtn);
 
   function handleFeedback(value) {
     if (value === 'yes') {
-      thankYou.textContent = 'Great - thanks for your feedback.';
+      thankYou.textContent = config.yesMessage;
       wrapper.classList.add('feedback-submitted');
       // send feedback event to Google Analytics
       if (typeof window.gtag === 'function') {
@@ -66,7 +100,7 @@ export default function decorate(block) {
 
   submitBtn.addEventListener('click', () => {
     const comment = negativeTextarea.value.trim();
-    thankYou.textContent = 'Thanks for your feedback \u2013 it\u2019s been sent to our web team.';
+    thankYou.textContent = config.noMessage;
     wrapper.classList.remove('feedback-negative-open');
     wrapper.classList.add('feedback-submitted');
     if (typeof window.gtag === 'function') {
