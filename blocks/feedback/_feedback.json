@@ -26,27 +26,6 @@
           "name": "question",
           "label": "Question",
           "value": "Was this information helpful?"
-        },
-        {
-          "component": "text",
-          "valueType": "string",
-          "name": "confirm",
-          "label": "Yes Button Label",
-          "value": "Yes"
-        },
-        {
-          "component": "text",
-          "valueType": "string",
-          "name": "deny",
-          "label": "No Button Label",
-          "value": "No"
-        },
-        {
-          "component": "text",
-          "valueType": "string",
-          "name": "formHeading",
-          "label": "Feedback Form Title",
-          "value": "Page-level feedback"
         }
       ]
     }

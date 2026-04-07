@@ -12,18 +12,11 @@ const DEFAULTS = {
 function parseBlockContent(block) {
   const rows = [...block.children];
   if (!rows.length) return {};
-  const cells = rows.map((row) => {
-    const cell = row.querySelector('div');
-    return cell ? cell.textContent.trim() : '';
-  }).filter(Boolean);
-  if (!cells.length) return {};
-  const [question, confirm, deny, formHeading] = cells;
-  const parsed = {};
-  if (question) parsed.question = question;
-  if (confirm) parsed.yesLabel = confirm;
-  if (deny) parsed.noLabel = deny;
-  if (formHeading) parsed.negativeTitle = formHeading;
-  return parsed;
+  const firstRow = rows[0];
+  const cell = firstRow.querySelector('div');
+  const question = cell ? cell.textContent.trim() : '';
+  if (!question) return {};
+  return { question };
 }
 
 export default function decorate(block, content = {}) {
