@@ -200,14 +200,14 @@
       {
         "component": "text",
         "valueType": "string",
-        "name": "confirmText",
+        "name": "confirm",
         "label": "Yes Button Label",
         "value": "Yes"
       },
       {
         "component": "text",
         "valueType": "string",
-        "name": "denyText",
+        "name": "deny",
         "label": "No Button Label",
         "value": "No"
       },

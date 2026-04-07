@@ -17,11 +17,11 @@ function parseBlockContent(block) {
     return cell ? cell.textContent.trim() : '';
   }).filter(Boolean);
   if (!cells.length) return {};
-  const [question, confirmText, denyText, formHeading] = cells;
+  const [question, confirm, deny, formHeading] = cells;
   const parsed = {};
   if (question) parsed.question = question;
-  if (confirmText) parsed.yesLabel = confirmText;
-  if (denyText) parsed.noLabel = denyText;
+  if (confirm) parsed.yesLabel = confirm;
+  if (deny) parsed.noLabel = deny;
   if (formHeading) parsed.negativeTitle = formHeading;
   return parsed;
 }
