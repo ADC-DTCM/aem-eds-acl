@@ -1,5 +1,6 @@
 import { getMetadata } from '../../scripts/aem.js';
 import { loadFragment } from '../fragment/fragment.js';
+import feedbackDecorate from '../feedback/feedback.js';
 
 /**
  * loads and decorates the footer
@@ -15,6 +16,12 @@ export default async function decorate(block) {
   block.textContent = '';
   const footer = document.createElement('div');
   while (fragment.firstElementChild) footer.append(fragment.firstElementChild);
+
+  // add feedback component before footer content
+  const feedbackBlock = document.createElement('div');
+  feedbackBlock.classList.add('feedback', 'block');
+  feedbackDecorate(feedbackBlock);
+  block.prepend(feedbackBlock);
 
   block.append(footer);
 }
