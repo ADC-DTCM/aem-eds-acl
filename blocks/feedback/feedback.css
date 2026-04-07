@@ -1,24 +1,24 @@
 @import url('feedback-variables.css');
 
 .feedback-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: var(--feedback-gap);
   padding: var(--feedback-padding);
+  margin-bottom: var(--feedback-padding);
   background-color: var(--feedback-bg);
+  width: 100%;
 }
 
 .feedback-question {
-  margin: 0;
+  margin: 0 0 var(--feedback-gap) 0;
+  display: inline;
   font-size: var(--feedback-question-font-size);
   font-weight: var(--feedback-question-font-weight);
   color: var(--feedback-question-color);
 }
 
 .feedback-buttons {
-  display: flex;
+  display: inline-flex;
   gap: 8px;
+  margin-left: var(--feedback-gap);
 }
 
 .feedback-buttons button {

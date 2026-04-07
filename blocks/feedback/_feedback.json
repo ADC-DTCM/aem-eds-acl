@@ -26,6 +26,27 @@
           "name": "question",
           "label": "Question",
           "value": "Was this information helpful?"
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "heading",
+          "label": "Feedback Form Title",
+          "value": "Page-level feedback"
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "prompt",
+          "label": "Feedback Form Message",
+          "value": "Sorry about that. How can we improve the information?"
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "thanks",
+          "label": "Thank You Message",
+          "value": "Thanks for your feedback!"
         }
       ]
     }

@@ -5,18 +5,28 @@ const DEFAULTS = {
   negativeTitle: 'Page-level feedback',
   negativeLabel: 'Sorry about that. How can we improve the information?',
   submitLabel: 'Submit',
-  yesMessage: 'Great - thanks for your feedback.',
-  noMessage: 'Thanks for your feedback \u2013 it\u2019s been sent to our web team.',
+  yesMessage: 'Thanks for your feedback!',
+  noMessage: 'Thanks for your feedback!',
 };
 
 function parseBlockContent(block) {
   const rows = [...block.children];
   if (!rows.length) return {};
-  const firstRow = rows[0];
-  const cell = firstRow.querySelector('div');
-  const question = cell ? cell.textContent.trim() : '';
-  if (!question) return {};
-  return { question };
+  const cells = rows.map((row) => {
+    const cell = row.querySelector('div');
+    return cell ? cell.textContent.trim() : '';
+  }).filter(Boolean);
+  if (!cells.length) return {};
+  const [question, heading, prompt, thanks] = cells;
+  const parsed = {};
+  if (question) parsed.question = question;
+  if (heading) parsed.negativeTitle = heading;
+  if (prompt) parsed.negativeLabel = prompt;
+  if (thanks) {
+    parsed.yesMessage = thanks;
+    parsed.noMessage = thanks;
+  }
+  return parsed;
 }
 
 export default function decorate(block, content = {}) {
