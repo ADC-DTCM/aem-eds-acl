@@ -41,11 +41,5 @@
       "button",
       "title"
     ]
-  },
-  {
-    "id": "news-cards",
-    "components": [
-      "news-card"
-    ]
   }
 ]

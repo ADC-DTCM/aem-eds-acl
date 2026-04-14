@@ -53,30 +53,36 @@ function buildCard(meta) {
 }
 
 export default async function decorate(block) {
-  const rows = [...block.children];
-
-  // first row = block-level fields (title + more link)
-  const headerRow = rows.shift();
-  const headerCells = headerRow ? [...headerRow.children] : [];
-
   let titleText = '';
-  let moreLink = null;
-  headerCells.forEach((cell) => {
+  const allLinks = [];
+
+  // scan all cells for title text and links
+  block.querySelectorAll(':scope > div > div').forEach((cell) => {
     const a = cell.querySelector('a');
     if (a) {
-      moreLink = a;
+      allLinks.push(a);
     } else {
       const text = cell.textContent.trim();
-      if (text) titleText = text;
+      if (text && !titleText) titleText = text;
     }
   });
 
-  // remaining rows = child items (page links)
-  const pageLinks = [];
-  rows.forEach((row) => {
-    const a = row.querySelector('a');
-    if (a) pageLinks.push(a);
-  });
+  // fallback: scan rows directly
+  if (!allLinks.length) {
+    [...block.children].forEach((row) => {
+      const a = row.querySelector('a');
+      if (a) {
+        allLinks.push(a);
+      } else {
+        const text = row.textContent.trim();
+        if (text && !titleText) titleText = text;
+      }
+    });
+  }
+
+  // last link = more, rest = page cards
+  const moreLink = allLinks.length > 1 ? allLinks.pop() : null;
+  const pageLinks = allLinks;
 
   const paths = pageLinks.map((a) => new URL(a.href).pathname);
   const metadataList = await Promise.all(paths.map((p) => fetchPageMetadata(p)));

@@ -268,18 +268,28 @@
       },
       {
         "component": "aem-content",
-        "name": "moreLink",
-        "label": "More Link"
-      }
-    ]
-  },
-  {
-    "id": "news-card",
-    "fields": [
+        "name": "page1",
+        "label": "Page 1"
+      },
       {
         "component": "aem-content",
-        "name": "reference",
-        "label": "Page"
+        "name": "page2",
+        "label": "Page 2"
+      },
+      {
+        "component": "aem-content",
+        "name": "page3",
+        "label": "Page 3"
+      },
+      {
+        "component": "aem-content",
+        "name": "page4",
+        "label": "Page 4"
+      },
+      {
+        "component": "aem-content",
+        "name": "moreLink",
+        "label": "More Link"
       }
     ]
   },
