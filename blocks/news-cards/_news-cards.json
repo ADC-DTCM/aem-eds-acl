@@ -21,6 +21,13 @@
       "id": "news-cards",
       "fields": [
         {
+          "component": "text",
+          "name": "title",
+          "label": "Title",
+          "valueType": "string",
+          "value": ""
+        },
+        {
           "component": "aem-content",
           "name": "page1",
           "label": "Page 1"

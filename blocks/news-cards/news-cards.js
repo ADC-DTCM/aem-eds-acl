@@ -19,9 +19,8 @@ async function fetchPageMetadata(path) {
   };
 }
 
-function buildCard(meta, isFeatured) {
+function buildCard(meta) {
   const li = document.createElement('li');
-  if (isFeatured) li.classList.add('news-cards-featured');
 
   const card = document.createElement('a');
   card.href = meta.path;
@@ -54,17 +53,31 @@ function buildCard(meta, isFeatured) {
 }
 
 export default async function decorate(block) {
+  const rows = [...block.children];
+  const titleRow = rows.shift();
+  const titleText = titleRow?.textContent?.trim();
+
   const links = [...block.querySelectorAll('a')];
   const paths = links.map((a) => new URL(a.href).pathname);
 
   const metadataList = await Promise.all(paths.map((p) => fetchPageMetadata(p)));
 
+  const wrapper = document.createDocumentFragment();
+
+  if (titleText) {
+    const heading = document.createElement('h2');
+    heading.className = 'news-cards-title';
+    heading.textContent = titleText;
+    wrapper.append(heading);
+  }
+
   const ul = document.createElement('ul');
-  metadataList.forEach((meta, index) => {
+  metadataList.forEach((meta) => {
     if (meta) {
-      ul.append(buildCard(meta, index === 0));
+      ul.append(buildCard(meta));
     }
   });
 
-  block.replaceChildren(ul);
+  wrapper.append(ul);
+  block.replaceChildren(wrapper);
 }
