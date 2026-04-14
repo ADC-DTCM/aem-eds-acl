@@ -38,7 +38,8 @@
         {
           "component": "aem-content",
           "name": "reference",
-          "label": "Page"
+          "label": "Page",
+          "valueType": "string"
         }
       ]
     }
