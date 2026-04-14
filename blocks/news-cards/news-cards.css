@@ -105,3 +105,12 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* Side by side when two news-cards in one section */
+@media (width >= 900px) {
+  .section > div:has(> .news-cards:nth-of-type(2)) {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+  }
+}

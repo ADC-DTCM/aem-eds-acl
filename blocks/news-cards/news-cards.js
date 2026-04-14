@@ -53,29 +53,30 @@ function buildCard(meta) {
 }
 
 export default async function decorate(block) {
-  // collect all links and title text from the block
-  const allLinks = [...block.querySelectorAll('a')];
-  let titleText = '';
+  const rows = [...block.children];
 
-  // find title: first div/cell that has no link
-  block.querySelectorAll(':scope > div > div').forEach((cell) => {
-    if (!cell.querySelector('a') && cell.textContent.trim() && !titleText) {
-      titleText = cell.textContent.trim();
+  // first row = block-level fields (title + more link)
+  const headerRow = rows.shift();
+  const headerCells = headerRow ? [...headerRow.children] : [];
+
+  let titleText = '';
+  let moreLink = null;
+  headerCells.forEach((cell) => {
+    const a = cell.querySelector('a');
+    if (a) {
+      moreLink = a;
+    } else {
+      const text = cell.textContent.trim();
+      if (text) titleText = text;
     }
   });
 
-  // if no cells found, try direct children
-  if (!titleText) {
-    [...block.children].forEach((row) => {
-      if (!row.querySelector('a') && row.textContent.trim() && !titleText) {
-        titleText = row.textContent.trim();
-      }
-    });
-  }
-
-  // first 4 links = pages, 5th = more link
-  const pageLinks = allLinks.slice(0, 4);
-  const moreLink = allLinks.length > 4 ? allLinks[4] : null;
+  // remaining rows = child items (page links)
+  const pageLinks = [];
+  rows.forEach((row) => {
+    const a = row.querySelector('a');
+    if (a) pageLinks.push(a);
+  });
 
   const paths = pageLinks.map((a) => new URL(a.href).pathname);
   const metadataList = await Promise.all(paths.map((p) => fetchPageMetadata(p)));
