@@ -1,0 +1,42 @@
+.teaser {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.teaser-image picture {
+  line-height: 0;
+}
+
+.teaser-image img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.teaser-content h2,
+.teaser-content h3,
+.teaser-content h4 {
+  margin: 0 0 8px;
+}
+
+.teaser-content p {
+  margin: 0;
+}
+
+@media (width >= 900px) {
+  .teaser {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .teaser-image {
+    flex: 0 0 50%;
+  }
+
+  .teaser-content {
+    flex: 1;
+  }
+}
