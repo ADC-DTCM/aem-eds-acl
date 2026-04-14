@@ -51,7 +51,9 @@
         "cards",
         "columns",
         "fragment",
-        "feedback"
+        "feedback",
+        "news-cards",
+        "teaser"
       ]
     }
   ]
