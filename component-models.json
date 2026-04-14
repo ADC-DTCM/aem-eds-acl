@@ -257,6 +257,10 @@
     ]
   },
   {
+    "id": "news-cards",
+    "fields": []
+  },
+  {
     "id": "news-card",
     "fields": [
       {
