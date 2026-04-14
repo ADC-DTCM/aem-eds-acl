@@ -1,38 +1,69 @@
 import { createOptimizedPicture } from '../../scripts/aem.js';
-import { moveInstrumentation } from '../../scripts/scripts.js';
 
-export default function decorate(block) {
+async function fetchPageMetadata(path) {
+  const resp = await fetch(path);
+  if (!resp.ok) return null;
+  const html = await resp.text();
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+
+  const title = doc.querySelector('title')?.textContent || '';
+  const description = doc.querySelector('meta[name="description"]')?.content || '';
+  const image = doc.querySelector('meta[property="og:image"]')?.content || '';
+
+  return {
+    title,
+    description,
+    image,
+    path,
+  };
+}
+
+function buildCard(meta, isFeatured) {
+  const li = document.createElement('li');
+  if (isFeatured) li.classList.add('news-cards-featured');
+
+  const card = document.createElement('a');
+  card.href = meta.path;
+  card.className = 'news-cards-card-link';
+
+  if (meta.image) {
+    const imageDiv = document.createElement('div');
+    imageDiv.className = 'news-cards-card-image';
+    const pic = createOptimizedPicture(meta.image, meta.title, false, [{ width: '750' }]);
+    imageDiv.append(pic);
+    card.append(imageDiv);
+  }
+
+  const body = document.createElement('div');
+  body.className = 'news-cards-card-body';
+
+  const h3 = document.createElement('h3');
+  h3.textContent = meta.title;
+  body.append(h3);
+
+  if (meta.description) {
+    const p = document.createElement('p');
+    p.textContent = meta.description;
+    body.append(p);
+  }
+
+  card.append(body);
+  li.append(card);
+  return li;
+}
+
+export default async function decorate(block) {
+  const links = [...block.querySelectorAll('a')];
+  const paths = links.map((a) => new URL(a.href).pathname);
+
+  const metadataList = await Promise.all(paths.map((p) => fetchPageMetadata(p)));
+
   const ul = document.createElement('ul');
-  [...block.children].forEach((row, index) => {
-    const li = document.createElement('li');
-    moveInstrumentation(row, li);
-    if (index === 0) li.classList.add('news-cards-featured');
-    while (row.firstElementChild) li.append(row.firstElementChild);
-    [...li.children].forEach((div) => {
-      if (div.children.length === 1 && div.querySelector('picture')) {
-        div.className = 'news-cards-card-image';
-      } else {
-        div.className = 'news-cards-card-body';
-      }
-    });
-
-    // wrap entire card in a link if there's an anchor in the body
-    const link = li.querySelector('.news-cards-card-body a');
-    if (link) {
-      const cardLink = document.createElement('a');
-      cardLink.href = link.href;
-      cardLink.className = 'news-cards-card-link';
-      cardLink.append(...li.childNodes);
-      li.append(cardLink);
+  metadataList.forEach((meta, index) => {
+    if (meta) {
+      ul.append(buildCard(meta, index === 0));
     }
-
-    ul.append(li);
-  });
-
-  ul.querySelectorAll('picture > img').forEach((img) => {
-    const optimizedPic = createOptimizedPicture(img.src, img.alt, false, [{ width: '750' }]);
-    moveInstrumentation(img, optimizedPic.querySelector('img'));
-    img.closest('picture').replaceWith(optimizedPic);
   });
 
   block.replaceChildren(ul);
