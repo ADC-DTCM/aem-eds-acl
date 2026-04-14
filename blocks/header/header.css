@@ -52,6 +52,10 @@ header nav[aria-expanded="true"] {
   }
 }
 
+header nav a:any-link {
+  color: white;
+}
+
 header .breadcrumb {
   max-width: 1066px;
   margin: auto;
@@ -70,10 +74,6 @@ header .breadcrumb a:hover {
   header .breadcrumb {
     padding: 0 32px;
   }
-}
-
-header nav a:any-link {
-  color: white;
 }
 
 header nav p {
