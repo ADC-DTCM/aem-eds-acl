@@ -257,17 +257,14 @@
     ]
   },
   {
-    "id": "news-cards",
-    "fields": []
-  },
-  {
     "id": "news-card",
     "fields": [
       {
-        "component": "aem-content",
+        "component": "text",
         "name": "reference",
-        "label": "Page",
-        "valueType": "string"
+        "label": "Page Path",
+        "valueType": "string",
+        "value": ""
       }
     ]
   },
