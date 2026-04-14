@@ -53,13 +53,31 @@ function buildCard(meta) {
 }
 
 export default async function decorate(block) {
-  const rows = [...block.children];
-  const titleRow = rows.shift();
-  const titleText = titleRow?.textContent?.trim();
+  // collect all links and title text from the block
+  const allLinks = [...block.querySelectorAll('a')];
+  let titleText = '';
 
-  const links = [...block.querySelectorAll('a')];
-  const paths = links.map((a) => new URL(a.href).pathname);
+  // find title: first div/cell that has no link
+  block.querySelectorAll(':scope > div > div').forEach((cell) => {
+    if (!cell.querySelector('a') && cell.textContent.trim() && !titleText) {
+      titleText = cell.textContent.trim();
+    }
+  });
 
+  // if no cells found, try direct children
+  if (!titleText) {
+    [...block.children].forEach((row) => {
+      if (!row.querySelector('a') && row.textContent.trim() && !titleText) {
+        titleText = row.textContent.trim();
+      }
+    });
+  }
+
+  // first 4 links = pages, 5th = more link
+  const pageLinks = allLinks.slice(0, 4);
+  const moreLink = allLinks.length > 4 ? allLinks[4] : null;
+
+  const paths = pageLinks.map((a) => new URL(a.href).pathname);
   const metadataList = await Promise.all(paths.map((p) => fetchPageMetadata(p)));
 
   const wrapper = document.createDocumentFragment();
@@ -79,5 +97,17 @@ export default async function decorate(block) {
   });
 
   wrapper.append(ul);
+
+  if (moreLink) {
+    const moreContainer = document.createElement('div');
+    moreContainer.className = 'news-cards-more';
+    const btn = document.createElement('a');
+    btn.href = moreLink.href;
+    btn.className = 'button primary';
+    btn.textContent = 'More';
+    moreContainer.append(btn);
+    wrapper.append(moreContainer);
+  }
+
   block.replaceChildren(wrapper);
 }

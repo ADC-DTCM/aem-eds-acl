@@ -285,6 +285,11 @@
         "component": "aem-content",
         "name": "page4",
         "label": "Page 4"
+      },
+      {
+        "component": "aem-content",
+        "name": "moreLink",
+        "label": "More Link"
       }
     ]
   },

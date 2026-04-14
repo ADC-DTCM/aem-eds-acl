@@ -94,6 +94,11 @@
   color: var(--link-color);
 }
 
+.news-cards .news-cards-more {
+  margin-top: 24px;
+  text-align: right;
+}
+
 /* Tablet and up: 2 columns */
 @media (width >= 600px) {
   .news-cards > ul {
