@@ -260,11 +260,9 @@
     "id": "news-card",
     "fields": [
       {
-        "component": "text",
+        "component": "aem-content",
         "name": "reference",
-        "label": "Page Path",
-        "valueType": "string",
-        "value": ""
+        "label": "Reference"
       }
     ]
   },
