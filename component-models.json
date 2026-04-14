@@ -257,12 +257,27 @@
     ]
   },
   {
-    "id": "news-card",
+    "id": "news-cards",
     "fields": [
       {
         "component": "aem-content",
-        "name": "reference",
-        "label": "Reference"
+        "name": "page1",
+        "label": "Page 1"
+      },
+      {
+        "component": "aem-content",
+        "name": "page2",
+        "label": "Page 2"
+      },
+      {
+        "component": "aem-content",
+        "name": "page3",
+        "label": "Page 3"
+      },
+      {
+        "component": "aem-content",
+        "name": "page4",
+        "label": "Page 4"
       }
     ]
   },
