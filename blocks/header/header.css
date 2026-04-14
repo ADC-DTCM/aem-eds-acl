@@ -1,3 +1,5 @@
+@import url('../breadcrumb/breadcrumb.css');
+
 /* header and nav layout */
 header .nav-wrapper {
   background-color: var(--primary-color);
@@ -47,6 +49,26 @@ header nav[aria-expanded="true"] {
   header nav[aria-expanded="true"] {
     min-height: 0;
     overflow: visible;
+  }
+}
+
+header .breadcrumb {
+  max-width: 1066px;
+  margin: auto;
+  padding: 0 24px;
+}
+
+header .breadcrumb a:any-link {
+  color: var(--link-color);
+}
+
+header .breadcrumb a:hover {
+  color: var(--link-hover-color);
+}
+
+@media (width >= 900px) {
+  header .breadcrumb {
+    padding: 0 32px;
   }
 }
 
