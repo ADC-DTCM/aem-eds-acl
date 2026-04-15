@@ -1,14 +1,19 @@
 import { createOptimizedPicture } from '../../scripts/aem.js';
 import { moveInstrumentation } from '../../scripts/scripts.js';
 
+const DEFAULT_IMAGE = '/media_1c9306d7674c0b8ee54457c9ac52f817a0d3410ae.png';
+
 export default function decorate(block) {
+  // With field collapse + element grouping, EDS renders:
+  //   row[0] -> <div> with <picture> (image + imageAlt collapsed)
+  //   row[1] -> <div> with text content (all textContent_ fields grouped: title, description, CTAs)
   const rows = [...block.children];
-  const imageRow = rows[0];
-  const contentRow = rows[1];
+  const [imageRow, textContentRow] = rows;
 
   // Build image container
   const imageContainer = document.createElement('div');
   imageContainer.className = 'teaser-image';
+
   if (imageRow) {
     moveInstrumentation(imageRow, imageContainer);
     const pic = imageRow.querySelector('picture');
@@ -21,17 +26,68 @@ export default function decorate(block) {
         moveInstrumentation(img, optimizedPic.querySelector('img'));
         imageContainer.append(optimizedPic);
       }
+    } else {
+      const optimizedPic = createOptimizedPicture(
+        `${window.hlx.codeBasePath}${DEFAULT_IMAGE}`,
+        'Default teaser image',
+        false,
+        [{ width: '750' }],
+      );
+      imageContainer.append(optimizedPic);
     }
   }
 
-  // Build content container
+  // Build content container from the grouped textContent div
   const contentContainer = document.createElement('div');
   contentContainer.className = 'teaser-content';
-  if (contentRow) {
-    moveInstrumentation(contentRow, contentContainer);
-    while (contentRow.firstElementChild) {
-      contentContainer.append(contentRow.firstElementChild);
-    }
+
+  if (textContentRow) {
+    moveInstrumentation(textContentRow, contentContainer);
+    const innerDiv = textContentRow.querySelector('div') || textContentRow;
+
+    const textContainer = document.createElement('div');
+    textContainer.className = 'teaser-text';
+
+    const ctaContainer = document.createElement('div');
+    ctaContainer.className = 'teaser-cta';
+
+    // Collect all child elements into a static array to avoid mutation issues
+    const children = [...innerDiv.querySelectorAll(':scope > *')];
+
+    // First non-link element is the title — convert to <h3>
+    let titleFound = false;
+    children.forEach((child) => {
+      // Links (or wrappers containing only a link) → CTA
+      if (child.tagName === 'A') {
+        child.classList.add('button');
+        ctaContainer.append(child);
+        return;
+      }
+
+      // A <p> wrapping only an <a> is a CTA (EDS button pattern)
+      const innerLink = child.querySelector(':scope > a');
+      if (innerLink && child.children.length === 1 && child.tagName === 'P') {
+        innerLink.classList.add('button');
+        ctaContainer.append(innerLink);
+        return;
+      }
+
+      // First text element becomes the title
+      if (!titleFound && child.textContent.trim()) {
+        titleFound = true;
+        const h3 = document.createElement('h3');
+        h3.textContent = child.textContent.trim();
+        moveInstrumentation(child, h3);
+        textContainer.append(h3);
+        return;
+      }
+
+      // Everything else is description content
+      textContainer.append(child);
+    });
+
+    if (textContainer.children.length) contentContainer.append(textContainer);
+    if (ctaContainer.children.length) contentContainer.append(ctaContainer);
   }
 
   block.replaceChildren(imageContainer, contentContainer);

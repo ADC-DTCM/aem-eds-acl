@@ -16,7 +16,9 @@
       "cards",
       "columns",
       "fragment",
-      "feedback"
+      "feedback",
+      "news-cards",
+      "teaser"
     ]
   },
   {
@@ -38,12 +40,6 @@
       "image",
       "button",
       "title"
-    ]
-  },
-  {
-    "id": "news-cards",
-    "components": [
-      "news-card"
     ]
   }
 ]

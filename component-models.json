@@ -257,27 +257,60 @@
     ]
   },
   {
-    "id": "news-card",
+    "id": "news-cards",
     "fields": [
       {
-        "component": "reference",
+        "component": "text",
+        "name": "title",
+        "label": "Title",
         "valueType": "string",
-        "name": "image",
-        "label": "Image",
-        "multi": false
+        "value": ""
       },
       {
-        "component": "richtext",
-        "name": "text",
-        "value": "",
-        "label": "Text",
-        "valueType": "string"
+        "component": "aem-content",
+        "name": "page1",
+        "label": "Page 1"
+      },
+      {
+        "component": "aem-content",
+        "name": "page2",
+        "label": "Page 2"
+      },
+      {
+        "component": "aem-content",
+        "name": "page3",
+        "label": "Page 3"
+      },
+      {
+        "component": "aem-content",
+        "name": "page4",
+        "label": "Page 4"
+      },
+      {
+        "component": "aem-content",
+        "name": "moreLink",
+        "label": "More Link"
       }
     ]
   },
   {
     "id": "teaser",
     "fields": [
+      {
+        "component": "select",
+        "name": "classes",
+        "label": "Teaser Variant",
+        "options": [
+          {
+            "name": "Half and Half",
+            "value": ""
+          },
+          {
+            "name": "9x3",
+            "value": "9x3"
+          }
+        ]
+      },
       {
         "component": "reference",
         "valueType": "string",
@@ -289,22 +322,84 @@
         "component": "text",
         "valueType": "string",
         "name": "imageAlt",
-        "label": "Alt Text",
-        "value": ""
+        "label": "Image Alt Text",
+        "required": true
       },
       {
         "component": "text",
-        "valueType": "string",
-        "name": "title",
+        "name": "textContent_title",
         "label": "Title",
-        "value": ""
+        "valueType": "string",
+        "required": true
       },
       {
         "component": "richtext",
-        "name": "description",
+        "name": "textContent_description",
         "label": "Description",
         "valueType": "string",
-        "value": ""
+        "required": true
+      },
+      {
+        "component": "aem-content",
+        "name": "textContent_cta1",
+        "label": "CTA 1 Link",
+        "valueType": "string"
+      },
+      {
+        "component": "text",
+        "name": "textContent_cta1Text",
+        "label": "CTA 1 Label",
+        "valueType": "string"
+      },
+      {
+        "component": "select",
+        "name": "textContent_cta1Style",
+        "label": "CTA 1 Style",
+        "options": [
+          {
+            "name": "Default",
+            "value": ""
+          },
+          {
+            "name": "Primary",
+            "value": "primary"
+          },
+          {
+            "name": "Secondary",
+            "value": "secondary"
+          }
+        ]
+      },
+      {
+        "component": "aem-content",
+        "name": "textContent_cta2",
+        "label": "CTA 2 Link",
+        "valueType": "string"
+      },
+      {
+        "component": "text",
+        "name": "textContent_cta2Text",
+        "label": "CTA 2 Label",
+        "valueType": "string"
+      },
+      {
+        "component": "select",
+        "name": "textContent_cta2Style",
+        "label": "CTA 2 Style",
+        "options": [
+          {
+            "name": "Default",
+            "value": ""
+          },
+          {
+            "name": "Primary",
+            "value": "primary"
+          },
+          {
+            "name": "Secondary",
+            "value": "secondary"
+          }
+        ]
       }
     ]
   }

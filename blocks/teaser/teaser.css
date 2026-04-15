@@ -1,19 +1,29 @@
+/* ===========================
+   Teaser – shared styles
+   =========================== */
 .teaser {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  overflow: hidden;
+  border-radius: 8px;
 }
 
 .teaser-image picture {
   line-height: 0;
+  display: block;
 }
 
 .teaser-image img {
   width: 100%;
-  height: auto;
-  aspect-ratio: 16 / 9;
+  height: 100%;
   object-fit: cover;
-  border-radius: 8px;
+  display: block;
+}
+
+.teaser-content {
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .teaser-content h2,
@@ -23,20 +33,106 @@
 }
 
 .teaser-content p {
+  margin: 0 0 4px;
+}
+
+.teaser-text {
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.teaser-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.teaser-cta a.button {
   margin: 0;
 }
 
+/* ===========================
+   Half-and-half (default)
+   =========================== */
+.teaser:not(.\39 x3) .teaser-image img {
+  aspect-ratio: 16 / 9;
+}
+
+.teaser:not(.\39 x3) .teaser-content {
+  background-color: rgb(140 210 244);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 @media (width >= 900px) {
-  .teaser {
+  .teaser:not(.\39 x3) {
+    flex-direction: row;
+  }
+
+  .teaser:not(.\39 x3) .teaser-image {
+    flex: 0 0 50%;
+    min-width: 0;
+  }
+
+  .teaser:not(.\39 x3) .teaser-image img {
+    aspect-ratio: auto;
+    height: 100%;
+  }
+
+  .teaser:not(.\39 x3) .teaser-content {
+    flex: 0 0 50%;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+}
+
+/* ===========================
+   9x3 variant
+   =========================== */
+.teaser.\39 x3 {
+  position: relative;
+}
+
+.teaser.\39 x3 .teaser-image {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.teaser.\39 x3 .teaser-image img {
+  height: 100%;
+}
+
+.teaser.\39 x3 .teaser-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 32px 24px;
+  color: white;
+  min-height: 300px;
+  box-sizing: border-box;
+}
+
+@media (width >= 900px) {
+  .teaser.\39 x3 .teaser-content {
     flex-direction: row;
     align-items: center;
+    padding: 48px 32px;
   }
 
-  .teaser-image {
-    flex: 0 0 50%;
+  .teaser.\39 x3 .teaser-content .teaser-text {
+    flex: 0 0 66.666%;
   }
 
-  .teaser-content {
-    flex: 1;
+  .teaser.\39 x3 .teaser-content .teaser-cta {
+    flex: 0 0 33.333%;
+    justify-content: flex-end;
+    margin-top: 0;
   }
 }

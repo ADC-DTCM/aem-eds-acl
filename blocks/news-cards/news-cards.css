@@ -1,3 +1,14 @@
+.news-cards .news-cards-title {
+  color: white;
+  background-color: var(--primary-color);
+  font-family: var(--heading-font-family);
+  font-size: var(--heading-font-size-l);
+  font-weight: 600;
+  margin: 16px 0;
+  padding: 8px 16px;
+  display: block;
+}
+
 .news-cards > ul {
   list-style: none;
   margin: 0;
@@ -83,62 +94,23 @@
   color: var(--link-color);
 }
 
-/* Featured first card - larger */
-.news-cards > ul > li.news-cards-featured {
-  grid-column: 1 / -1;
+.news-cards .news-cards-more {
+  margin-top: 24px;
+  text-align: right;
 }
 
-/* Tablet: 2 columns */
+/* Tablet and up: 2 columns */
 @media (width >= 600px) {
   .news-cards > ul {
     grid-template-columns: repeat(2, 1fr);
   }
-
-  .news-cards > ul > li.news-cards-featured {
-    grid-column: 1 / -1;
-  }
-
-  .news-cards > ul > li.news-cards-featured .news-cards-card-link {
-    flex-direction: row;
-  }
-
-  .news-cards > ul > li.news-cards-featured .news-cards-card-image {
-    flex: 0 0 55%;
-  }
-
-  .news-cards > ul > li.news-cards-featured .news-cards-card-image img {
-    height: 100%;
-    aspect-ratio: auto;
-  }
-
-  .news-cards > ul > li.news-cards-featured .news-cards-card-body {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 24px 32px;
-  }
-
-  .news-cards > ul > li.news-cards-featured .news-cards-card-body h1,
-  .news-cards > ul > li.news-cards-featured .news-cards-card-body h2,
-  .news-cards > ul > li.news-cards-featured .news-cards-card-body h3,
-  .news-cards > ul > li.news-cards-featured .news-cards-card-body h4,
-  .news-cards > ul > li.news-cards-featured .news-cards-card-body h5,
-  .news-cards > ul > li.news-cards-featured .news-cards-card-body h6 {
-    font-size: var(--heading-font-size-l);
-  }
-
-  .news-cards > ul > li.news-cards-featured .news-cards-card-body p {
-    font-size: var(--body-font-size-s);
-  }
 }
 
-/* Desktop: 4 columns for non-featured */
+/* Side by side when two news-cards in one section */
 @media (width >= 900px) {
-  .news-cards > ul {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  .news-cards > ul > li.news-cards-featured {
-    grid-column: 1 / -1;
+  .section > div:has(> .news-cards:nth-of-type(2)) {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
   }
 }
