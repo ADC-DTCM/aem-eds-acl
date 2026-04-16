@@ -52,7 +52,7 @@ export default function decorate(block) {
     ctaContainer.className = 'teaser-cta';
 
     // Known CTA style values that should be applied as button classes, not rendered
-    const ctaStyles = ['primary', 'secondary'];
+    const ctaStyles = ['primary', 'secondary', 'black'];
 
     // Collect all child elements into a static array to avoid mutation issues
     const children = [...innerDiv.querySelectorAll(':scope > *')];
