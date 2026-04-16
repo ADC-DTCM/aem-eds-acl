@@ -1,5 +1,5 @@
 mountpoints:
   /:
-    url: "https://author-p28003-e1277044.adobeaemcloud.com/bin/franklin.delivery/adc-dtcm/aem-eds-acl/features/news-cards"
+    url: "https://author-p28003-e1277044.adobeaemcloud.com/bin/franklin.delivery/adc-dtcm/aem-eds-acl/main"
     type: "markup"
     suffix: ".html"
