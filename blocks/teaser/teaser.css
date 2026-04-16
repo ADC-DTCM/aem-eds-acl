@@ -23,7 +23,6 @@
 .teaser-content {
   min-width: 0;
   overflow-wrap: break-word;
-  word-break: break-word;
   color: var(--black);
 }
 
@@ -40,7 +39,6 @@
 .teaser-text {
   min-width: 0;
   overflow-wrap: break-word;
-  word-break: break-word;
 }
 
 .teaser-cta {
@@ -59,7 +57,7 @@
   margin: 0;
   min-width: 150px;
   max-width: 100%;
-  font-family: "afacad", sans-serif;
+  font-family: afacad, sans-serif;
   white-space: normal;
   overflow-wrap: break-word;
 }
@@ -77,7 +75,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  font-family: "Afacad", sans-serif;
+  font-family: Afacad, sans-serif;
 }
 
 @media (width >= 768px) {
