@@ -20,24 +20,23 @@
   --link-hover-color: #1d3ecf;
   --primary-color: #194036;
   --secondary-color: #ffc51d;
+  --black: #1d1c1a;
 
   /* fonts */
-  --body-font-family: roboto, roboto-fallback, sans-serif;
-  --heading-font-family:
-    roboto-condensed, roboto-condensed-fallback, sans-serif;
+  --body-font-family: "Clear Sans", sans-serif;
+  --heading-font-family: "Zilla Slab", "Courier New", monospace;
 
   /* body sizes */
-  --body-font-size-m: 22px;
-  --body-font-size-s: 19px;
-  --body-font-size-xs: 17px;
+  --body-font-size: 0.875rem;
 
   /* heading sizes */
-  --heading-font-size-xxl: 55px;
-  --heading-font-size-xl: 44px;
-  --heading-font-size-l: 34px;
-  --heading-font-size-m: 27px;
-  --heading-font-size-s: 24px;
-  --heading-font-size-xs: 22px;
+
+  --heading-font-size-xxl: 45px;
+  --heading-font-size-xl: 36px;
+  --heading-font-size-l: 28px;
+  --heading-font-size-m: 22px;
+  --heading-font-size-s: 20px;
+  --heading-font-size-xs: 18px;
 
   /* nav height */
   --nav-height: 64px;
@@ -56,20 +55,18 @@
   src: local("Arial");
 }
 
-@media (width >= 900px) {
+@media (width >= 768px) {
   :root {
     /* body sizes */
-    --body-font-size-m: 18px;
-    --body-font-size-s: 16px;
-    --body-font-size-xs: 14px;
+    --body-font-size: 1rem;
 
     /* heading sizes */
-    --heading-font-size-xxl: 45px;
-    --heading-font-size-xl: 36px;
-    --heading-font-size-l: 28px;
-    --heading-font-size-m: 22px;
-    --heading-font-size-s: 20px;
-    --heading-font-size-xs: 18px;
+    --heading-font-size-xxl: 55px;
+    --heading-font-size-xl: 30px;
+    --heading-font-size-l: 34px;
+    --heading-font-size-m: 27px;
+    --heading-font-size-s: 24px;
+    --heading-font-size-xs: 22px;
   }
 }
 
@@ -79,7 +76,7 @@ body {
   background-color: var(--background-color);
   color: var(--text-color);
   font-family: var(--body-font-family);
-  font-size: var(--body-font-size-m);
+  font-size: var(--body-font-size);
   line-height: 1.6;
 }
 
@@ -151,7 +148,7 @@ blockquote {
 
 code,
 pre {
-  font-size: var(--body-font-size-s);
+  font-size: var(--body-font-size);
 }
 
 pre {
@@ -232,6 +229,12 @@ a.button.secondary,
 button.secondary {
   background-color: var(--secondary-color);
   color: var(--text-color);
+}
+
+a.button.black,
+button.black {
+  background-color: var(--black);
+  color: white;
 }
 
 main img {

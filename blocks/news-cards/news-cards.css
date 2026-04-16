@@ -23,7 +23,9 @@
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 1px 6px 0 rgb(0 0 0 / 10%);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
 .news-cards > ul > li:hover {
@@ -79,7 +81,7 @@
 
 .news-cards .news-cards-card-body p {
   margin: 0;
-  font-size: var(--body-font-size-xs);
+  font-size: var(--body-font-size);
   color: var(--dark-color);
   line-height: 1.5;
 }

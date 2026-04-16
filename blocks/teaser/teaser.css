@@ -24,6 +24,7 @@
   min-width: 0;
   overflow-wrap: break-word;
   word-break: break-word;
+  color: var(--black);
 }
 
 .teaser-content h2,
@@ -44,13 +45,23 @@
 
 .teaser-cta {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 12px;
   margin-top: 16px;
+  flex-shrink: 1;
+  min-height: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .teaser-cta a.button {
   margin: 0;
+  min-width: 150px;
+  max-width: 100%;
+  font-family: "afacad", sans-serif;
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 
 /* ===========================
@@ -61,14 +72,15 @@
 }
 
 .teaser:not(.\39 x3) .teaser-content {
-  background-color: rgb(140 210 244);
+  background-color: #8cd2f4;
   padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  font-family: "Afacad", sans-serif;
 }
 
-@media (width >= 900px) {
+@media (width >= 768px) {
   .teaser:not(.\39 x3) {
     flex-direction: row;
   }
@@ -76,6 +88,10 @@
   .teaser:not(.\39 x3) .teaser-image {
     flex: 0 0 50%;
     min-width: 0;
+  }
+
+  .teaser:not(.\39 x3) .teaser-image picture {
+    height: 100%;
   }
 
   .teaser:not(.\39 x3) .teaser-image img {
@@ -101,10 +117,30 @@
   position: absolute;
   inset: 0;
   z-index: 0;
+  overflow: hidden;
+}
+
+.teaser.\39 x3 .teaser-image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    rgb(0 0 0 / 90%) 0%,
+    rgb(0 0 0 / 0%) 100%
+  );
+  z-index: 1;
+}
+
+.teaser.\39 x3 .teaser-image picture {
+  width: 100%;
+  height: 100%;
 }
 
 .teaser.\39 x3 .teaser-image img {
+  width: 100%;
   height: 100%;
+  object-fit: cover;
 }
 
 .teaser.\39 x3 .teaser-content {
@@ -112,18 +148,27 @@
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 32px 24px;
+  gap: 32px;
+
+  padding: 32px;
   color: white;
-  min-height: 300px;
   box-sizing: border-box;
 }
 
-@media (width >= 900px) {
+.teaser.\39 x3 .teaser-content h3 {
+  padding-top: 24px;
+}
+
+.teaser.\39 x3 .teaser-cta {
+  align-items: stretch;
+}
+
+@media (width >= 768px) {
   .teaser.\39 x3 .teaser-content {
     flex-direction: row;
     align-items: center;
-    padding: 48px 32px;
+    padding: 24px;
+    gap: 64px;
   }
 
   .teaser.\39 x3 .teaser-content .teaser-text {
@@ -131,7 +176,7 @@
   }
 
   .teaser.\39 x3 .teaser-content .teaser-cta {
-    flex: 0 0 33.333%;
+    flex: 1;
     justify-content: flex-end;
     margin-top: 0;
   }
