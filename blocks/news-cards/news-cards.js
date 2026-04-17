@@ -11,9 +11,25 @@ async function fetchIndex() {
   return indexData;
 }
 
+async function fetchPageMetadata(path) {
+  const resp = await fetch(path);
+  if (!resp.ok) return null;
+  const html = await resp.text();
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  return {
+    path,
+    title: doc.querySelector('title')?.textContent || '',
+    description: doc.querySelector('meta[name="description"]')?.content || '',
+    image: doc.querySelector('meta[property="og:image"]')?.content || '',
+  };
+}
+
 async function getPageMetadata(path) {
   const index = await fetchIndex();
-  return index.find((entry) => entry.path === path) || null;
+  const entry = index.find((e) => e.path === path);
+  if (entry?.title) return entry;
+  return fetchPageMetadata(path);
 }
 
 function buildCard(meta) {
