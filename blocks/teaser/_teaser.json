@@ -88,16 +88,16 @@
           "label": "CTA 1 Style",
           "options": [
             {
-              "name": "Default",
-              "value": ""
-            },
-            {
               "name": "Primary",
               "value": "primary"
             },
             {
               "name": "Secondary",
               "value": "secondary"
+            },
+            {
+              "name": "Black",
+              "value": "black"
             }
           ]
         },
@@ -119,16 +119,16 @@
           "label": "CTA 2 Style",
           "options": [
             {
-              "name": "Default",
-              "value": ""
-            },
-            {
               "name": "Primary",
               "value": "primary"
             },
             {
               "name": "Secondary",
               "value": "secondary"
+            },
+            {
+              "name": "Black",
+              "value": "black"
             }
           ]
         }

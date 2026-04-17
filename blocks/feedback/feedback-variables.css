@@ -3,12 +3,12 @@
   --feedback-bg: white;
   --feedback-padding: 24px;
   --feedback-gap: 16px;
-  --feedback-question-font-size: var(--body-font-size-s);
+  --feedback-question-font-size: var(--body-font-size);
   --feedback-question-font-weight: 500;
   --feedback-question-color: var(--text-color);
   --feedback-btn-min-width: 110px;
   --feedback-btn-min-height: 45px;
-  --feedback-btn-font-size: .875rem;
+  --feedback-btn-font-size: 0.875rem;
   --feedback-btn-line-height: 1.5;
   --feedback-btn-border-radius: 0;
   --feedback-thankyou-color: var(--primary-color);

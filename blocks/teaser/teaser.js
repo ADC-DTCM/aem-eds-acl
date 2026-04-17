@@ -51,16 +51,21 @@ export default function decorate(block) {
     const ctaContainer = document.createElement('div');
     ctaContainer.className = 'teaser-cta';
 
+    // Known CTA style values that should be applied as button classes, not rendered
+    const ctaStyles = ['primary', 'secondary', 'black'];
+
     // Collect all child elements into a static array to avoid mutation issues
     const children = [...innerDiv.querySelectorAll(':scope > *')];
 
-    // First non-link element is the title — convert to <h3>
+    // First non-link element is the title — convert to <h2>
     let titleFound = false;
+    let lastCta = null;
     children.forEach((child) => {
       // Links (or wrappers containing only a link) → CTA
       if (child.tagName === 'A') {
         child.classList.add('button');
         ctaContainer.append(child);
+        lastCta = child;
         return;
       }
 
@@ -69,16 +74,26 @@ export default function decorate(block) {
       if (innerLink && child.children.length === 1 && child.tagName === 'P') {
         innerLink.classList.add('button');
         ctaContainer.append(innerLink);
+        lastCta = innerLink;
         return;
       }
+
+      // If we just processed a CTA and this element is a style value, apply it
+      const text = child.textContent.trim().toLowerCase();
+      if (lastCta && ctaStyles.includes(text)) {
+        lastCta.classList.add(text);
+        lastCta = null;
+        return;
+      }
+      lastCta = null;
 
       // First text element becomes the title
       if (!titleFound && child.textContent.trim()) {
         titleFound = true;
-        const h3 = document.createElement('h3');
-        h3.textContent = child.textContent.trim();
-        moveInstrumentation(child, h3);
-        textContainer.append(h3);
+        const h2 = document.createElement('h2');
+        h2.textContent = child.textContent.trim();
+        moveInstrumentation(child, h2);
+        textContainer.append(h2);
         return;
       }
 
