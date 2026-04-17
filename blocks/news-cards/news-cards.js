@@ -1,22 +1,19 @@
 import { createOptimizedPicture } from '../../scripts/aem.js';
 
-async function fetchPageMetadata(path) {
-  const resp = await fetch(path);
-  if (!resp.ok) return null;
-  const html = await resp.text();
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, 'text/html');
+let indexData;
 
-  const title = doc.querySelector('title')?.textContent || '';
-  const description = doc.querySelector('meta[name="description"]')?.content || '';
-  const image = doc.querySelector('meta[property="og:image"]')?.content || '';
+async function fetchIndex() {
+  if (indexData) return indexData;
+  const resp = await fetch('/query-index.json');
+  if (!resp.ok) return [];
+  const json = await resp.json();
+  indexData = json.data || [];
+  return indexData;
+}
 
-  return {
-    title,
-    description,
-    image,
-    path,
-  };
+async function getPageMetadata(path) {
+  const index = await fetchIndex();
+  return index.find((entry) => entry.path === path) || null;
 }
 
 function buildCard(meta) {
@@ -85,7 +82,7 @@ export default async function decorate(block) {
   const pageLinks = allLinks;
 
   const paths = pageLinks.map((a) => new URL(a.href).pathname);
-  const metadataList = await Promise.all(paths.map((p) => fetchPageMetadata(p)));
+  const metadataList = await Promise.all(paths.map((p) => getPageMetadata(p)));
 
   const wrapper = document.createDocumentFragment();
 
