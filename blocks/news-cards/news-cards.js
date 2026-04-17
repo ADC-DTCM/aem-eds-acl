@@ -21,14 +21,19 @@ async function fetchPageMetadata(path) {
     path,
     title: doc.querySelector('title')?.textContent || '',
     description: doc.querySelector('meta[name="description"]')?.content || '',
-    image: doc.querySelector('meta[property="og:image"]')?.content || '',
+    image: doc.querySelector('meta[property="og:image"]')?.content
+      || doc.querySelector('main picture > img')?.getAttribute('src')
+      || '',
   };
 }
 
 async function getPageMetadata(path) {
   const index = await fetchIndex();
   const entry = index.find((e) => e.path === path);
-  if (entry?.title) return entry;
+  if (entry?.title) {
+    entry.image = entry.image || entry.contentImage || '';
+    return entry;
+  }
   return fetchPageMetadata(path);
 }
 
