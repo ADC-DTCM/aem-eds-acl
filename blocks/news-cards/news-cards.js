@@ -20,12 +20,23 @@ function resolveImageUrl(src) {
 let indexData;
 
 async function fetchIndex() {
-  if (isAuthorEnv()) return [];
   if (indexData) return indexData;
-  const resp = await fetch('/query-index.json');
-  if (!resp.ok) return [];
-  const json = await resp.json();
-  indexData = json.data || [];
+  let url = '/query-index.json';
+  const opts = {};
+  if (isAuthorEnv()) {
+    url = '/bin/franklin.delivery/adc-dtcm/aem-eds-acl/main/query-index.json';
+    opts.credentials = 'include';
+  }
+  try {
+    const resp = await fetch(url, opts);
+    if (!resp.ok) return [];
+    const text = await resp.text();
+    if (text.includes('granite.login')) return [];
+    const json = JSON.parse(text);
+    indexData = json.data || [];
+  } catch {
+    indexData = [];
+  }
   return indexData;
 }
 
