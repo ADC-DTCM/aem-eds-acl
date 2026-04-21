@@ -21,18 +21,10 @@ let indexData;
 
 async function fetchIndex() {
   if (indexData) return indexData;
-  let url = '/query-index.json';
-  const opts = {};
-  if (isAuthorEnv()) {
-    url = '/bin/franklin.delivery/adc-dtcm/aem-eds-acl/main/query-index.json';
-    opts.credentials = 'include';
-  }
   try {
-    const resp = await fetch(url, opts);
+    const resp = await fetch('/query-index.json');
     if (!resp.ok) return [];
-    const text = await resp.text();
-    if (text.includes('granite.login')) return [];
-    const json = JSON.parse(text);
+    const json = await resp.json();
     indexData = json.data || [];
   } catch {
     indexData = [];
