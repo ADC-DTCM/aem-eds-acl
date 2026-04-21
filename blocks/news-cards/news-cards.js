@@ -61,8 +61,9 @@ function buildCard(meta) {
   if (meta.image) {
     const imageDiv = document.createElement('div');
     imageDiv.className = 'news-cards-card-image';
-    const pic = createOptimizedPicture(meta.image, meta.title, false, [{ width: '750' }]);
-    imageDiv.append(pic);
+    imageDiv.append(
+      createOptimizedPicture(meta.image, meta.title, false, [{ width: '750' }]),
+    );
     card.append(imageDiv);
   }
 
