@@ -21,8 +21,11 @@ let indexData;
 
 async function fetchIndex() {
   if (indexData) return indexData;
+  const url = isAuthorEnv()
+    ? '/bin/franklin.delivery/adc-dtcm/aem-eds-acl/main/query-index.json'
+    : '/query-index.json';
   try {
-    const resp = await fetch('/query-index.json');
+    const resp = await fetch(url);
     if (!resp.ok) return [];
     const json = await resp.json();
     indexData = json.data || [];
