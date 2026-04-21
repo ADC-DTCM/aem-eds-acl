@@ -1,20 +1,15 @@
 import { createOptimizedPicture } from '../../scripts/aem.js';
 
-const PREVIEW_ORIGIN = 'https://main--aem-eds-acl--adc-dtcm.aem.page';
-
 function isAuthorEnv() {
   return window.location.hostname.includes('adobeaemcloud.com');
-}
-
-function resolveUrl(path) {
-  return isAuthorEnv() ? `${PREVIEW_ORIGIN}${path}` : path;
 }
 
 let indexData;
 
 async function fetchIndex() {
+  if (isAuthorEnv()) return [];
   if (indexData) return indexData;
-  const resp = await fetch(resolveUrl('/query-index.json'));
+  const resp = await fetch('/query-index.json');
   if (!resp.ok) return [];
   const json = await resp.json();
   indexData = json.data || [];
@@ -22,7 +17,7 @@ async function fetchIndex() {
 }
 
 async function fetchPageMetadata(path) {
-  const resp = await fetch(resolveUrl(path));
+  const resp = await fetch(path);
   if (!resp.ok) return null;
   const html = await resp.text();
   const parser = new DOMParser();
