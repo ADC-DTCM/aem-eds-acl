@@ -21,9 +21,12 @@ async function fetchPageMetadata(path) {
     path,
     title: doc.querySelector('title')?.textContent || '',
     description: doc.querySelector('meta[name="description"]')?.content || '',
-    image: doc.querySelector('meta[property="og:image"]')?.content
-      || doc.querySelector('main picture > img')?.getAttribute('src')
-      || '',
+    image: (() => {
+      const ogImage = doc.querySelector('meta[property="og:image"]')?.content || '';
+      const contentImage = doc.querySelector('main picture > img')?.getAttribute('src') || '';
+      if (ogImage && !ogImage.includes('default-meta-image')) return ogImage;
+      return contentImage || ogImage;
+    })(),
   };
 }
 
@@ -31,7 +34,9 @@ async function getPageMetadata(path) {
   const index = await fetchIndex();
   const entry = index.find((e) => e.path === path);
   if (entry?.title) {
-    entry.image = entry.image || entry.contentImage || '';
+    const isDefault = entry.image && entry.image.includes('default-meta-image');
+    entry.image = (isDefault ? entry.contentImage : entry.image)
+      || entry.contentImage || '';
     return entry;
   }
   return fetchPageMetadata(path);
