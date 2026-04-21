@@ -1,7 +1,15 @@
 import { createOptimizedPicture } from '../../scripts/aem.js';
 
+const DELIVERY = '/bin/franklin.delivery/adc-dtcm/aem-eds-acl/main';
+
 function normalizePath(path) {
   return path.replace(/^\/content\/aem-eds-acl/, '').replace(/\.html$/, '');
+}
+
+async function safeFetch(path) {
+  let resp = await fetch(path);
+  if (!resp.ok) resp = await fetch(`${DELIVERY}${path}`);
+  return resp;
 }
 
 let indexData;
@@ -9,7 +17,7 @@ let indexData;
 async function fetchIndex() {
   if (indexData) return indexData;
   try {
-    const resp = await fetch('/query-index.json');
+    const resp = await safeFetch('/query-index.json');
     if (!resp.ok) return [];
     const json = await resp.json();
     indexData = json.data || [];
@@ -22,7 +30,8 @@ async function fetchIndex() {
 async function fetchPageMetadata(path) {
   const normalPath = normalizePath(path);
   try {
-    const resp = await fetch(normalPath);
+    let resp = await fetch(normalPath);
+    if (!resp.ok) resp = await fetch(`${DELIVERY}${normalPath}.html`);
     if (!resp.ok) return null;
     const html = await resp.text();
     const parser = new DOMParser();
