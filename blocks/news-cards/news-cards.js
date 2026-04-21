@@ -1,5 +1,7 @@
 import { createOptimizedPicture } from '../../scripts/aem.js';
 
+const PREVIEW_ORIGIN = 'https://main--aem-eds-acl--adc-dtcm.aem.page';
+
 function isAuthorEnv() {
   return window.location.hostname.includes('adobeaemcloud.com');
 }
@@ -17,19 +19,24 @@ async function fetchIndex() {
 }
 
 async function fetchPageMetadata(path) {
-  const resp = await fetch(path);
-  if (!resp.ok) return null;
-  const html = await resp.text();
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, 'text/html');
-  return {
-    path,
-    title: doc.querySelector('title')?.textContent || '',
-    description: doc.querySelector('meta[name="description"]')?.content || '',
-    image: doc.querySelector('meta[property="og:image"]')?.content
-      || doc.querySelector('main picture > img')?.getAttribute('src')
-      || '',
-  };
+  const url = isAuthorEnv() ? `${PREVIEW_ORIGIN}${path}` : path;
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) return null;
+    const html = await resp.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    return {
+      path,
+      title: doc.querySelector('title')?.textContent || '',
+      description: doc.querySelector('meta[name="description"]')?.content || '',
+      image: doc.querySelector('meta[property="og:image"]')?.content
+        || doc.querySelector('main picture > img')?.getAttribute('src')
+        || '',
+    };
+  } catch {
+    return null;
+  }
 }
 
 async function getPageMetadata(path) {
