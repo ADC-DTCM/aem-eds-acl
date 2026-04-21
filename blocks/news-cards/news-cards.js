@@ -6,24 +6,14 @@ function normalizePath(path) {
   return path.replace(/^\/content\/aem-eds-acl/, '').replace(/\.html$/, '');
 }
 
-async function safeFetch(path) {
-  let resp = await fetch(path);
-  if (!resp.ok) resp = await fetch(`${DELIVERY}${path}`);
-  return resp;
-}
-
 let indexData;
 
 async function fetchIndex() {
   if (indexData) return indexData;
-  try {
-    const resp = await safeFetch('/query-index.json');
-    if (!resp.ok) return [];
-    const json = await resp.json();
-    indexData = json.data || [];
-  } catch {
-    indexData = [];
-  }
+  const resp = await fetch('/query-index.json');
+  if (!resp.ok) return [];
+  const json = await resp.json();
+  indexData = json.data || [];
   return indexData;
 }
 
@@ -70,17 +60,8 @@ function buildCard(meta) {
   if (meta.image) {
     const imageDiv = document.createElement('div');
     imageDiv.className = 'news-cards-card-image';
-    if (meta.image.startsWith('http')) {
-      const img = document.createElement('img');
-      img.src = meta.image;
-      img.alt = meta.title || '';
-      img.loading = 'lazy';
-      imageDiv.append(img);
-    } else {
-      imageDiv.append(
-        createOptimizedPicture(meta.image, meta.title, false, [{ width: '750' }]),
-      );
-    }
+    const pic = createOptimizedPicture(meta.image, meta.title, false, [{ width: '750' }]);
+    imageDiv.append(pic);
     card.append(imageDiv);
   }
 
@@ -134,18 +115,8 @@ export default async function decorate(block) {
   const moreLink = allLinks.length > 1 ? allLinks.pop() : null;
   const pageLinks = allLinks;
 
-  const pageData = pageLinks.map((a) => ({
-    path: new URL(a.href).pathname,
-    text: a.textContent.trim(),
-  }));
-  const metadataList = await Promise.all(
-    pageData.map(async ({ path, text }) => {
-      const meta = await getPageMetadata(path);
-      return meta || {
-        path: normalizePath(path), title: text, description: '', image: '',
-      };
-    }),
-  );
+  const paths = pageLinks.map((a) => new URL(a.href).pathname);
+  const metadataList = await Promise.all(paths.map((p) => getPageMetadata(p)));
 
   const wrapper = document.createDocumentFragment();
 
@@ -158,7 +129,9 @@ export default async function decorate(block) {
 
   const ul = document.createElement('ul');
   metadataList.forEach((meta) => {
-    ul.append(buildCard(meta));
+    if (meta) {
+      ul.append(buildCard(meta));
+    }
   });
 
   wrapper.append(ul);
