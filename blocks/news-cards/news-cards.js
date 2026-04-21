@@ -1,9 +1,11 @@
 import { createOptimizedPicture } from '../../scripts/aem.js';
 
-const PREVIEW_ORIGIN = 'https://main--aem-eds-acl--adc-dtcm.aem.page';
-
 function isAuthorEnv() {
   return window.location.hostname.includes('adobeaemcloud.com');
+}
+
+function normalizePath(path) {
+  return path.replace(/^\/content\/aem-eds-acl/, '').replace(/\.html$/, '');
 }
 
 let indexData;
@@ -19,15 +21,22 @@ async function fetchIndex() {
 }
 
 async function fetchPageMetadata(path) {
-  const url = isAuthorEnv() ? `${PREVIEW_ORIGIN}${path}` : path;
+  const normalPath = normalizePath(path);
+  let url;
+  if (isAuthorEnv()) {
+    url = `/bin/franklin.delivery/adc-dtcm/aem-eds-acl/main${normalPath}.html`;
+  } else {
+    url = normalPath;
+  }
   try {
     const resp = await fetch(url);
     if (!resp.ok) return null;
     const html = await resp.text();
+    if (html.includes('granite.login')) return null;
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
     return {
-      path,
+      path: normalPath,
       title: doc.querySelector('title')?.textContent || '',
       description: doc.querySelector('meta[name="description"]')?.content || '',
       image: doc.querySelector('meta[property="og:image"]')?.content
@@ -40,8 +49,9 @@ async function fetchPageMetadata(path) {
 }
 
 async function getPageMetadata(path) {
+  const normalPath = normalizePath(path);
   const index = await fetchIndex();
-  const entry = index.find((e) => e.path === path);
+  const entry = index.find((e) => e.path === normalPath);
   if (entry?.title) {
     entry.image = entry.image || entry.contentImage || '';
     return entry;
@@ -114,8 +124,18 @@ export default async function decorate(block) {
   const moreLink = allLinks.length > 1 ? allLinks.pop() : null;
   const pageLinks = allLinks;
 
-  const paths = pageLinks.map((a) => new URL(a.href).pathname);
-  const metadataList = await Promise.all(paths.map((p) => getPageMetadata(p)));
+  const pageData = pageLinks.map((a) => ({
+    path: new URL(a.href).pathname,
+    text: a.textContent.trim(),
+  }));
+  const metadataList = await Promise.all(
+    pageData.map(async ({ path, text }) => {
+      const meta = await getPageMetadata(path);
+      return meta || {
+        path: normalizePath(path), title: text, description: '', image: '',
+      };
+    }),
+  );
 
   const wrapper = document.createDocumentFragment();
 
@@ -128,9 +148,7 @@ export default async function decorate(block) {
 
   const ul = document.createElement('ul');
   metadataList.forEach((meta) => {
-    if (meta) {
-      ul.append(buildCard(meta));
-    }
+    ul.append(buildCard(meta));
   });
 
   wrapper.append(ul);
