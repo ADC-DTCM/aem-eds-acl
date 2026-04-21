@@ -1,31 +1,15 @@
 import { createOptimizedPicture } from '../../scripts/aem.js';
 
-function isAuthorEnv() {
-  return window.location.hostname.includes('adobeaemcloud.com');
-}
-
-const PREVIEW_ORIGIN = 'https://main--aem-eds-acl--adc-dtcm.aem.page';
-
 function normalizePath(path) {
   return path.replace(/^\/content\/aem-eds-acl/, '').replace(/\.html$/, '');
-}
-
-function resolveImageUrl(src) {
-  if (!src) return '';
-  if (src.startsWith('http')) return src;
-  const clean = src.replace(/^\.?\//, '/');
-  return isAuthorEnv() ? `${PREVIEW_ORIGIN}${clean}` : clean;
 }
 
 let indexData;
 
 async function fetchIndex() {
   if (indexData) return indexData;
-  const url = isAuthorEnv()
-    ? '/bin/franklin.delivery/adc-dtcm/aem-eds-acl/main/query-index.json'
-    : '/query-index.json';
   try {
-    const resp = await fetch(url);
+    const resp = await fetch('/query-index.json');
     if (!resp.ok) return [];
     const json = await resp.json();
     indexData = json.data || [];
@@ -37,30 +21,19 @@ async function fetchIndex() {
 
 async function fetchPageMetadata(path) {
   const normalPath = normalizePath(path);
-  let url;
-  const opts = {};
-  if (isAuthorEnv()) {
-    url = `/bin/franklin.delivery/adc-dtcm/aem-eds-acl/main${normalPath}.html`;
-    opts.credentials = 'include';
-  } else {
-    url = normalPath;
-  }
   try {
-    const resp = await fetch(url, opts);
+    const resp = await fetch(normalPath);
     if (!resp.ok) return null;
     const html = await resp.text();
-    if (html.includes('granite.login')) return null;
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
     return {
       path: normalPath,
       title: doc.querySelector('title')?.textContent || '',
       description: doc.querySelector('meta[name="description"]')?.content || '',
-      image: resolveImageUrl(
-        doc.querySelector('meta[property="og:image"]')?.content
+      image: doc.querySelector('meta[property="og:image"]')?.content
         || doc.querySelector('main picture > img')?.getAttribute('src')
         || '',
-      ),
     };
   } catch {
     return null;
@@ -72,7 +45,7 @@ async function getPageMetadata(path) {
   const index = await fetchIndex();
   const entry = index.find((e) => e.path === normalPath);
   if (entry?.title) {
-    entry.image = resolveImageUrl(entry.image || entry.contentImage || '');
+    entry.image = entry.image || entry.contentImage || '';
     return entry;
   }
   return fetchPageMetadata(path);
@@ -88,17 +61,7 @@ function buildCard(meta) {
   if (meta.image) {
     const imageDiv = document.createElement('div');
     imageDiv.className = 'news-cards-card-image';
-    let pic;
-    if (isAuthorEnv()) {
-      pic = document.createElement('picture');
-      const img = document.createElement('img');
-      img.src = meta.image;
-      img.alt = meta.title || '';
-      img.loading = 'lazy';
-      pic.append(img);
-    } else {
-      pic = createOptimizedPicture(meta.image, meta.title, false, [{ width: '750' }]);
-    }
+    const pic = createOptimizedPicture(meta.image, meta.title, false, [{ width: '750' }]);
     imageDiv.append(pic);
     card.append(imageDiv);
   }
