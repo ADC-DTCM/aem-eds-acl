@@ -30,24 +30,10 @@ async function fetchIndex() {
 async function fetchPageMetadata(path) {
   const normalPath = normalizePath(path);
   try {
-    /* eslint-disable no-console */
-    console.log('[news-cards] fetchPageMetadata:', normalPath);
     let resp = await fetch(normalPath);
-    console.log('[news-cards] fetch', normalPath, resp.status);
-    if (!resp.ok) {
-      const deliveryUrl = `${DELIVERY}${normalPath}.html`;
-      resp = await fetch(deliveryUrl);
-      console.log('[news-cards] fetch', deliveryUrl, resp.status);
-    }
-    if (!resp.ok) {
-      const jcrUrl = `/content/aem-eds-acl${normalPath}.html`;
-      resp = await fetch(jcrUrl);
-      console.log('[news-cards] fetch', jcrUrl, resp.status);
-    }
+    if (!resp.ok) resp = await fetch(`${DELIVERY}${normalPath}.html`);
     if (!resp.ok) return null;
     const html = await resp.text();
-    console.log('[news-cards] html length:', html.length, 'title match:', html.includes('<title>'));
-    /* eslint-enable no-console */
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
     return {
@@ -58,9 +44,7 @@ async function fetchPageMetadata(path) {
         || doc.querySelector('main picture > img')?.getAttribute('src')
         || '',
     };
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.log('[news-cards] fetchPageMetadata error:', e);
+  } catch {
     return null;
   }
 }
@@ -86,9 +70,17 @@ function buildCard(meta) {
   if (meta.image) {
     const imageDiv = document.createElement('div');
     imageDiv.className = 'news-cards-card-image';
-    imageDiv.append(
-      createOptimizedPicture(meta.image, meta.title, false, [{ width: '750' }]),
-    );
+    if (meta.image.startsWith('http')) {
+      const img = document.createElement('img');
+      img.src = meta.image;
+      img.alt = meta.title || '';
+      img.loading = 'lazy';
+      imageDiv.append(img);
+    } else {
+      imageDiv.append(
+        createOptimizedPicture(meta.image, meta.title, false, [{ width: '750' }]),
+      );
+    }
     card.append(imageDiv);
   }
 
