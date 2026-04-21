@@ -42,6 +42,17 @@ async function getPageMetadata(path) {
   return fetchPageMetadata(path);
 }
 
+function normalizeImageUrl(url) {
+  if (!url) return '';
+  try {
+    const u = new URL(url, window.location.origin);
+    if (u.hostname.includes('aem.page') || u.hostname.includes('aem.live')) {
+      return u.pathname + u.search;
+    }
+  } catch { /* keep original */ }
+  return url;
+}
+
 function buildCard(meta) {
   const li = document.createElement('li');
 
@@ -49,10 +60,11 @@ function buildCard(meta) {
   card.href = meta.path;
   card.className = 'news-cards-card-link';
 
-  if (meta.image) {
+  const img = isAuthorEnv() ? normalizeImageUrl(meta.image) : meta.image;
+  if (img) {
     const imageDiv = document.createElement('div');
     imageDiv.className = 'news-cards-card-image';
-    const pic = createOptimizedPicture(meta.image, meta.title, false, [{ width: '750' }]);
+    const pic = createOptimizedPicture(img, meta.title, false, [{ width: '750' }]);
     imageDiv.append(pic);
     card.append(imageDiv);
   }
