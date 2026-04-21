@@ -1,11 +1,5 @@
 import { createOptimizedPicture } from '../../scripts/aem.js';
 
-const DELIVERY = '/bin/franklin.delivery/adc-dtcm/aem-eds-acl/main';
-
-function normalizePath(path) {
-  return path.replace(/^\/content\/aem-eds-acl/, '').replace(/\.html$/, '');
-}
-
 let indexData;
 
 async function fetchIndex() {
@@ -18,31 +12,24 @@ async function fetchIndex() {
 }
 
 async function fetchPageMetadata(path) {
-  const normalPath = normalizePath(path);
-  try {
-    let resp = await fetch(normalPath);
-    if (!resp.ok) resp = await fetch(`${DELIVERY}${normalPath}.html`);
-    if (!resp.ok) return null;
-    const html = await resp.text();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    return {
-      path: normalPath,
-      title: doc.querySelector('title')?.textContent || '',
-      description: doc.querySelector('meta[name="description"]')?.content || '',
-      image: doc.querySelector('meta[property="og:image"]')?.content
-        || doc.querySelector('main picture > img')?.getAttribute('src')
-        || '',
-    };
-  } catch {
-    return null;
-  }
+  const resp = await fetch(path);
+  if (!resp.ok) return null;
+  const html = await resp.text();
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  return {
+    path,
+    title: doc.querySelector('title')?.textContent || '',
+    description: doc.querySelector('meta[name="description"]')?.content || '',
+    image: doc.querySelector('meta[property="og:image"]')?.content
+      || doc.querySelector('main picture > img')?.getAttribute('src')
+      || '',
+  };
 }
 
 async function getPageMetadata(path) {
-  const normalPath = normalizePath(path);
   const index = await fetchIndex();
-  const entry = index.find((e) => e.path === normalPath);
+  const entry = index.find((e) => e.path === path);
   if (entry?.title) {
     entry.image = entry.image || entry.contentImage || '';
     return entry;
