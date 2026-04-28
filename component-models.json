@@ -231,6 +231,10 @@
     ]
   },
   {
+    "id": "carousel-slide",
+    "fields": []
+  },
+  {
     "id": "hero",
     "fields": [
       {

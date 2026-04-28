@@ -18,7 +18,8 @@
       "fragment",
       "feedback",
       "news-cards",
-      "teaser"
+      "teaser",
+      "carousel-container"
     ]
   },
   {
@@ -35,6 +36,21 @@
   },
   {
     "id": "column",
+    "components": [
+      "text",
+      "image",
+      "button",
+      "title"
+    ]
+  },
+  {
+    "id": "carousel-container",
+    "components": [
+      "carousel-slide"
+    ]
+  },
+  {
+    "id": "carousel-slide",
     "components": [
       "text",
       "image",
