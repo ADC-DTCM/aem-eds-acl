@@ -2,108 +2,93 @@ import { createOptimizedPicture } from '../../scripts/aem.js';
 import { moveInstrumentation } from '../../scripts/scripts.js';
 
 const DEFAULT_IMAGE = '/media_1c9306d7674c0b8ee54457c9ac52f817a0d3410ae.png';
+const CTA_STYLES = ['primary', 'secondary', 'black'];
+
+function createDiv(className) {
+  const div = document.createElement('div');
+  div.className = className;
+  return div;
+}
+
+function buildImage(imageRow) {
+  const container = createDiv('teaser-image');
+  if (!imageRow) return container;
+
+  moveInstrumentation(imageRow, container);
+  const img = imageRow.querySelector('picture img');
+
+  const src = img?.src || `${window.hlx.codeBasePath}${DEFAULT_IMAGE}`;
+  const alt = img?.alt || 'Default teaser image';
+  const optimized = createOptimizedPicture(src, alt, false, [{ width: '750' }]);
+
+  if (img) moveInstrumentation(img, optimized.querySelector('img'));
+  container.append(optimized);
+  return container;
+}
+
+function extractCta(child) {
+  if (child.tagName === 'A') return child;
+  if (child.tagName === 'P' && child.children.length === 1) {
+    const link = child.querySelector(':scope > a');
+    if (link) return link;
+  }
+  return null;
+}
+
+function buildContent(textContentRow) {
+  const container = createDiv('teaser-content');
+  if (!textContentRow) return container;
+
+  moveInstrumentation(textContentRow, container);
+  const innerDiv = textContentRow.querySelector('div') || textContentRow;
+  const children = [...innerDiv.querySelectorAll(':scope > *')];
+
+  const textContainer = createDiv('teaser-text');
+  const ctaContainer = createDiv('teaser-cta');
+
+  let titleFound = false;
+  let lastCta = null;
+
+  children.forEach((child) => {
+    const link = extractCta(child);
+    if (link) {
+      if (link.textContent.trim()) {
+        link.classList.add('button');
+        ctaContainer.append(link);
+        lastCta = link;
+      } else {
+        lastCta = null;
+      }
+      return;
+    }
+
+    const text = child.textContent.trim();
+
+    if (CTA_STYLES.includes(text.toLowerCase())) {
+      if (lastCta) lastCta.classList.add(text.toLowerCase());
+      lastCta = null;
+      return;
+    }
+    lastCta = null;
+
+    if (!titleFound && text) {
+      titleFound = true;
+      const h2 = document.createElement('h2');
+      h2.textContent = text;
+      moveInstrumentation(child, h2);
+      textContainer.append(h2);
+      return;
+    }
+
+    textContainer.append(child);
+  });
+
+  if (textContainer.children.length) container.append(textContainer);
+  if (ctaContainer.children.length) container.append(ctaContainer);
+  return container;
+}
 
 export default function decorate(block) {
-  // With field collapse + element grouping, EDS renders:
-  //   row[0] -> <div> with <picture> (image + imageAlt collapsed)
-  //   row[1] -> <div> with text content (all textContent_ fields grouped: title, description, CTAs)
-  const rows = [...block.children];
-  const [imageRow, textContentRow] = rows;
-
-  // Build image container
-  const imageContainer = document.createElement('div');
-  imageContainer.className = 'teaser-image';
-
-  if (imageRow) {
-    moveInstrumentation(imageRow, imageContainer);
-    const pic = imageRow.querySelector('picture');
-    if (pic) {
-      const img = pic.querySelector('img');
-      if (img) {
-        const optimizedPic = createOptimizedPicture(img.src, img.alt, false, [
-          { width: '750' },
-        ]);
-        moveInstrumentation(img, optimizedPic.querySelector('img'));
-        imageContainer.append(optimizedPic);
-      }
-    } else {
-      const optimizedPic = createOptimizedPicture(
-        `${window.hlx.codeBasePath}${DEFAULT_IMAGE}`,
-        'Default teaser image',
-        false,
-        [{ width: '750' }],
-      );
-      imageContainer.append(optimizedPic);
-    }
-  }
-
-  // Build content container from the grouped textContent div
-  const contentContainer = document.createElement('div');
-  contentContainer.className = 'teaser-content';
-
-  if (textContentRow) {
-    moveInstrumentation(textContentRow, contentContainer);
-    const innerDiv = textContentRow.querySelector('div') || textContentRow;
-
-    const textContainer = document.createElement('div');
-    textContainer.className = 'teaser-text';
-
-    const ctaContainer = document.createElement('div');
-    ctaContainer.className = 'teaser-cta';
-
-    // Known CTA style values that should be applied as button classes, not rendered
-    const ctaStyles = ['primary', 'secondary', 'black'];
-
-    // Collect all child elements into a static array to avoid mutation issues
-    const children = [...innerDiv.querySelectorAll(':scope > *')];
-
-    // First non-link element is the title — convert to <h2>
-    let titleFound = false;
-    let lastCta = null;
-    children.forEach((child) => {
-      // Links (or wrappers containing only a link) → CTA
-      if (child.tagName === 'A') {
-        child.classList.add('button');
-        ctaContainer.append(child);
-        lastCta = child;
-        return;
-      }
-
-      // A <p> wrapping only an <a> is a CTA (EDS button pattern)
-      const innerLink = child.querySelector(':scope > a');
-      if (innerLink && child.children.length === 1 && child.tagName === 'P') {
-        innerLink.classList.add('button');
-        ctaContainer.append(innerLink);
-        lastCta = innerLink;
-        return;
-      }
-
-      // If we just processed a CTA and this element is a style value, apply it
-      const text = child.textContent.trim().toLowerCase();
-      if (lastCta && ctaStyles.includes(text)) {
-        lastCta.classList.add(text);
-        lastCta = null;
-        return;
-      }
-      lastCta = null;
-
-      // First text element becomes the title
-      if (!titleFound && child.textContent.trim()) {
-        titleFound = true;
-        const h2 = document.createElement('h2');
-        h2.textContent = child.textContent.trim();
-        moveInstrumentation(child, h2);
-        textContainer.append(h2);
-        return;
-      }
-
-      // Everything else is description content
-      textContainer.append(child);
-    });
-
-    if (textContainer.children.length) contentContainer.append(textContainer);
-    if (ctaContainer.children.length) contentContainer.append(ctaContainer);
-  }
-
-  block.replaceChildren(imageContainer, contentContainer);
+  const [imageRow, textContentRow] = [...block.children];
+  block.replaceChildren(buildImage(imageRow), buildContent(textContentRow));
 }
