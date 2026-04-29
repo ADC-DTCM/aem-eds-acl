@@ -1,0 +1,121 @@
+.carousel-container .carousel-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.carousel-container .carousel-controls {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: stretch;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.carousel-container .carousel-prev,
+.carousel-container .carousel-next {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0;
+  border: 1px solid var(--dark-color, #505050);
+  border-radius: 4px;
+  background: var(--background-color, #fff);
+  color: var(--text-color, #384246);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.carousel-container .carousel-prev:hover:not(:disabled),
+.carousel-container .carousel-next:hover:not(:disabled) {
+  background: var(--light-color, #f5f4f2);
+}
+
+.carousel-container .carousel-prev:disabled,
+.carousel-container .carousel-next:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.carousel-container .carousel-viewport {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 100%;
+  gap: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  width: 100%;
+  min-height: 0;
+  border-radius: 4px;
+  outline: none;
+  touch-action: pan-x;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.carousel-container .carousel-viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel-container .carousel-viewport:focus-visible {
+  outline: 2px solid var(--link-color, #3b63fb);
+  outline-offset: 2px;
+}
+
+.carousel-container .carousel-viewport.is-dragging {
+  cursor: grabbing;
+  scroll-behavior: auto;
+}
+
+@media (pointer: fine) {
+  .carousel-container .carousel-viewport:not(.is-dragging) {
+    cursor: grab;
+  }
+}
+
+.carousel-container .carousel-slide {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid #dadada;
+  background: var(--background-color, #fff);
+}
+
+.carousel-container .carousel-dots {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.carousel-container .carousel-dot {
+  width: 0.65rem;
+  height: 0.65rem;
+  padding: 0;
+  border: 1px solid var(--dark-color, #505050);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.carousel-container .carousel-dot.is-active {
+  background: var(--primary-color, #194036);
+  border-color: var(--primary-color, #194036);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carousel-container .carousel-viewport {
+    scroll-behavior: auto;
+  }
+}
