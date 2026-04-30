@@ -38,8 +38,27 @@
   --heading-font-size-s: 20px;
   --heading-font-size-xs: 18px;
 
-  /* nav height */
-  --nav-height: 64px;
+  /* DOC (measured doc.govt.nz): gold bar 20px; green #194036; inner hard-cap 1066px */
+  --header-gold-stripe-height: 20px;
+  --header-inner-max-width: 1066px;
+  --header-nav-link-size: 0.875rem; /* 14px – primary nav on doc */
+  --header-mega-max-width: 1024px; /* DOC mega menu max-w-screen-lg */
+  --header-mega-min-col-width: 270px; /* DOC blue pill column min-w */
+  --header-section-blue: rgb(21 121 183);
+  --header-section-blue-hover: rgb(15 96 145);
+  --header-section-green: rgb(80 127 57);
+  --header-section-green-hover: rgb(56 90 37);
+  --header-section-purple: rgb(76 54 87);
+  --header-section-purple-hover: rgb(58 41 67);
+  --header-section-red: rgb(128 51 26);
+  --header-section-red-hover: rgb(96 38 19);
+
+  /* Green block: mobile ~112px (logo row + search row), desktop ~88px (single row) */
+  --header-bar-height-mobile: 112px;
+  --header-bar-height-desktop: 88px;
+  --nav-height: calc(
+    var(--header-gold-stripe-height) + var(--header-bar-height-mobile)
+  );
 }
 
 /* fallback fonts */
@@ -53,6 +72,14 @@
   font-family: roboto-fallback;
   size-adjust: 99.529%;
   src: local("Arial");
+}
+
+@media (width >= 768px) {
+  :root {
+    --nav-height: calc(
+      var(--header-gold-stripe-height) + var(--header-bar-height-desktop)
+    );
+  }
 }
 
 @media (width >= 768px) {
@@ -82,6 +109,10 @@ body {
 
 body.appear {
   display: block;
+}
+
+html {
+  scroll-padding-top: var(--nav-height);
 }
 
 header {

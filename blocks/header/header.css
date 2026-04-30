@@ -1,192 +1,678 @@
-/* header and nav layout */
+/*
+ * Header — modeled on doc.govt.nz (measured via Chrome DevTools MCP):
+ *  - Two bands: 20px gold strip (#ffc51d) + 88px green strip (#194036)
+ *  - Inner content hard-capped at 1066px, centred
+ *  - Mobile/desktop split at 768px (Tailwind md)
+ *  - Mobile drawer: per-section colour bars (blue/green/purple/red)
+ *  - Desktop mega menu: white panel max 1024px, blue-pill column with right-arrow
+ */
+
+/* ---------------- Wrapper bands ---------------- */
+
 header .nav-wrapper {
-  background-color: var(--primary-color);
-  width: 100%;
-  z-index: 2;
   position: fixed;
-  border-top: 20px solid var(--secondary-color);
+  top: 0;
+  left: 0;
+  z-index: 200;
+  width: 100%;
+  min-height: var(--nav-height);
+  padding-top: var(--header-gold-stripe-height);
+  box-sizing: border-box;
+  background: linear-gradient(
+    var(--secondary-color) 0,
+    var(--secondary-color) var(--header-gold-stripe-height),
+    var(--primary-color) var(--header-gold-stripe-height),
+    var(--primary-color) 100%
+  );
 }
+
+/* ---------------- Mobile-first nav layout ---------------- */
 
 header nav {
   box-sizing: border-box;
-  display: grid;
-  grid-template:
-    "hamburger brand tools" var(--nav-height)
-    "sections sections sections" 1fr / auto 1fr auto;
-  align-items: center;
-  gap: 0 24px;
-  margin: auto;
-  max-width: 1066px;
-  height: var(--nav-height);
-  padding: 0 24px;
+  width: 100%;
+  max-width: var(--header-inner-max-width);
+  margin: 0 auto;
+  padding: 8px 16px;
+  color: rgb(255 255 255);
   font-family: var(--body-font-family);
+  font-size: var(--header-nav-link-size);
+  font-weight: 400;
+  line-height: 1.25;
+  display: grid;
+  align-items: center;
+  gap: 8px;
+  grid-template:
+    "brand login hamburger" 48px
+    "search search search" 40px
+    / minmax(0, 1fr) auto auto;
 }
 
 header nav[aria-expanded="true"] {
   grid-template:
-    "hamburger brand" var(--nav-height)
-    "sections sections" 1fr
-    "tools tools" var(--nav-height) / auto 1fr;
-  overflow-y: auto;
-  min-height: 100dvh;
+    "brand login hamburger" 48px
+    "search search search" auto
+    "sections sections sections" minmax(0, 1fr)
+    / minmax(0, 1fr) auto auto;
+  align-content: start;
 }
 
-@media (width >= 900px) {
+/* Mobile: brand | login icon | hamburger row + always-visible search row */
+@media (width < 768px) {
+  header nav .nav-brand {
+    grid-area: brand;
+  }
+
+  header nav .nav-sections {
+    grid-area: sections;
+  }
+
+  /* Split the tools wrapper so login sits in the top row and search becomes
+     its own full-width row inside the green band, like doc.govt.nz */
+  header nav .nav-tools {
+    display: contents;
+  }
+
+  header nav .nav-tools .default-content-wrapper {
+    display: contents;
+  }
+
+  header nav .nav-tools .nav-login {
+    grid-area: login;
+  }
+
+  header nav .nav-tools .nav-search {
+    display: flex;
+    grid-area: search;
+    margin: 0;
+    width: 100%;
+    height: 40px;
+  }
+
+  header nav .nav-tools .nav-search input[type="search"] {
+    flex: 1 1 auto;
+    width: auto;
+  }
+
+  header nav .nav-tools .nav-search button {
+    width: 44px;
+  }
+}
+
+/* ---------------- Desktop layout (>= 768px) ---------------- */
+
+@media (width >= 768px) {
   header .nav-wrapper {
     position: relative;
   }
 
   header nav {
-    display: flex;
-    justify-content: space-between;
-    gap: 0 32px;
-    max-width: 1066px;
+    grid-template:
+      "brand sections tools" var(--header-bar-height-desktop)
+      / auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0 24px;
+    min-height: var(--header-bar-height-desktop);
+    height: var(--header-bar-height-desktop);
     padding: 0 32px;
+    overflow: visible;
   }
 
-  header nav[aria-expanded="true"] {
-    min-height: 0;
-    overflow: visible;
+  header nav .nav-brand {
+    grid-area: brand;
+    place-self: center start;
+  }
+
+  header nav .nav-sections {
+    grid-area: sections;
+    place-self: center;
+  }
+
+  header nav .nav-tools {
+    grid-area: tools;
+    place-self: center end;
+    display: flex;
   }
 }
 
 header nav p {
   margin: 0;
-  line-height: 1;
+  line-height: 1.25;
 }
 
-header nav a:any-link {
-  color: white;
-}
+/* ---------------- Brand / logo ---------------- */
 
-/* hamburger */
-header nav .nav-hamburger {
-  grid-area: hamburger;
-  height: 22px;
-  display: flex;
-  align-items: center;
-}
-
-header nav .nav-hamburger button {
-  height: 22px;
-  margin: 0;
-  border: 0;
-  border-radius: 0;
-  padding: 0;
-  background-color: var(--background-color);
-  color: inherit;
-  overflow: initial;
-  text-overflow: initial;
-  white-space: initial;
-}
-
-header nav .nav-hamburger-icon,
-header nav .nav-hamburger-icon::before,
-header nav .nav-hamburger-icon::after {
-  box-sizing: border-box;
-  display: block;
-  position: relative;
-  width: 20px;
-}
-
-header nav .nav-hamburger-icon::before,
-header nav .nav-hamburger-icon::after {
-  content: "";
-  position: absolute;
-  background: currentcolor;
-}
-
-header nav[aria-expanded="false"] .nav-hamburger-icon,
-header nav[aria-expanded="false"] .nav-hamburger-icon::before,
-header nav[aria-expanded="false"] .nav-hamburger-icon::after {
-  height: 2px;
-  border-radius: 2px;
-  background: currentcolor;
-}
-
-header nav[aria-expanded="false"] .nav-hamburger-icon::before {
-  top: -6px;
-}
-
-header nav[aria-expanded="false"] .nav-hamburger-icon::after {
-  top: 6px;
-}
-
-header nav[aria-expanded="true"] .nav-hamburger-icon {
-  height: 22px;
-}
-
-header nav[aria-expanded="true"] .nav-hamburger-icon::before,
-header nav[aria-expanded="true"] .nav-hamburger-icon::after {
-  top: 3px;
-  left: 1px;
-  transform: rotate(45deg);
-  transform-origin: 2px 1px;
-  width: 24px;
-  height: 2px;
-  border-radius: 2px;
-}
-
-header nav[aria-expanded="true"] .nav-hamburger-icon::after {
-  top: unset;
-  bottom: 3px;
-  transform: rotate(-45deg);
-}
-
-@media (width >= 900px) {
-  header nav .nav-hamburger {
-    display: none;
-    visibility: hidden;
-  }
-}
-
-/* brand */
 header .nav-brand {
-  grid-area: brand;
-  flex-basis: 128px;
-  font-size: var(--heading-font-size-s);
-  font-weight: 700;
-  line-height: 1;
+  max-width: min(280px, 60vw);
+  color: rgb(255 255 255);
+  font-family: var(--body-font-family);
+  font-size: var(--header-nav-link-size);
+  font-weight: 400;
+  line-height: 1.2;
 }
 
 header nav .nav-brand img {
-  width: 128px;
-  height: auto;
+  display: block;
+  width: auto;
+  height: 48px;
+  max-width: 220px;
+  object-fit: contain;
 }
 
-/* sections */
+@media (width >= 768px) {
+  header nav .nav-brand img {
+    height: 56px;
+    max-width: 240px;
+  }
+}
+
+/* ---------------- Link defaults inside nav ---------------- */
+
+header nav .nav-brand a:any-link,
+header nav .nav-tools a:any-link,
+header nav .nav-sections a:any-link {
+  color: rgb(255 255 255);
+  font-size: var(--header-nav-link-size);
+  font-weight: 400;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+header nav .nav-brand a:any-link:hover,
+header nav .nav-tools a:any-link:hover,
+header nav .nav-sections a:any-link:hover {
+  color: rgb(255 255 255);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+header nav .nav-brand a:any-link:focus-visible,
+header nav .nav-tools a:any-link:focus-visible,
+header nav .nav-sections a:any-link:focus-visible {
+  outline: 2px solid var(--secondary-color);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Boilerplate "blue pill" button styles bleed in from styles.css; neutralise here. */
+header nav .nav-brand a.button:any-link,
+header nav .nav-tools a.button:any-link,
+header nav .nav-sections a.button:any-link {
+  box-sizing: border-box;
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: none;
+  max-width: none;
+  font-weight: 400;
+  line-height: inherit;
+  text-align: unset;
+  white-space: nowrap;
+  vertical-align: baseline;
+  overflow: visible;
+  text-overflow: unset;
+  background-color: transparent;
+  background-image: none;
+  color: rgb(255 255 255);
+}
+
+header nav .nav-brand a.button:hover,
+header nav .nav-brand a.button:focus,
+header nav .nav-tools a.button:hover,
+header nav .nav-tools a.button:focus,
+header nav .nav-sections a.button:hover,
+header nav .nav-sections a.button:focus {
+  background-color: transparent;
+  color: rgb(255 255 255);
+}
+
+@media (width >= 768px) {
+  header nav .nav-drop:focus-visible {
+    outline: 2px solid var(--secondary-color);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+}
+
+/* ---------------- Hamburger (mobile only) ---------------- */
+
+@media (width < 768px) {
+  header nav .nav-hamburger {
+    grid-area: hamburger;
+    flex-shrink: 0;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  header nav .nav-hamburger button {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    width: 40px;
+    margin: 0;
+    padding: 8px;
+    border: 0;
+    border-radius: 0;
+    background-color: transparent;
+    color: rgb(255 255 255);
+    cursor: pointer;
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+  }
+
+  /* DOC's open-state X sits inside a thin square box outline (mobile only) */
+  header nav[aria-expanded="true"] .nav-hamburger button {
+    border: 2px solid rgb(255 255 255);
+    padding: 6px;
+  }
+
+  header nav .nav-hamburger button:focus-visible {
+    outline: 2px solid var(--secondary-color);
+    outline-offset: 3px;
+  }
+
+  header nav .nav-hamburger button:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Two SVG glyphs are stacked; aria-expanded picks which one is shown. */
+  header nav .nav-hamburger-icon {
+    display: inline-block;
+    position: relative;
+    width: 24px;
+    height: 24px;
+    color: currentcolor;
+  }
+
+  header nav .nav-hamburger-icon .nav-hamburger-glyph {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    color: currentcolor;
+  }
+
+  header nav[aria-expanded="false"] .nav-hamburger-icon .nav-hamburger-glyph:nth-child(2),
+  header nav[aria-expanded="true"] .nav-hamburger-icon .nav-hamburger-glyph:nth-child(1) {
+    display: none;
+  }
+}
+
+@media (width >= 768px) {
+  header nav .nav-hamburger {
+    display: none;
+  }
+}
+
+/* ---------------- Tools (login + search) ---------------- */
+
+header nav .nav-tools {
+  font-size: var(--header-nav-link-size);
+}
+
+header nav .nav-tools li,
+header nav .nav-tools p {
+  margin: 0;
+}
+
+header nav .nav-tools:empty {
+  display: none;
+}
+
+@media (width >= 768px) {
+  header nav .nav-tools .default-content-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+}
+
+header nav .nav-login {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 0;
+  white-space: nowrap;
+}
+
+header nav .nav-login .nav-login-icon {
+  display: block;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  color: currentcolor;
+}
+
+/* Mobile: icon-only (no visible label, like doc.govt.nz) */
+@media (width < 768px) {
+  header nav .nav-login {
+    place-self: center end;
+    width: 40px;
+    height: 40px;
+    padding: 8px;
+  }
+
+  header nav .nav-login .nav-login-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+@media (width >= 768px) {
+  header nav .nav-login .nav-login-icon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+header nav .nav-search {
+  display: flex;
+  align-items: stretch;
+  height: 32px;
+  margin: 0;
+}
+
+header nav .nav-search input[type="search"] {
+  box-sizing: border-box;
+  width: clamp(140px, 18vw, 220px);
+  height: 100%;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: rgb(255 255 255);
+  color: var(--text-color);
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+header nav .nav-search input[type="search"]::placeholder {
+  color: rgb(0 0 0 / 45%);
+}
+
+header nav .nav-search input[type="search"]:focus {
+  outline: 2px solid var(--secondary-color);
+  outline-offset: 1px;
+}
+
+header nav .nav-search button {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: rgb(0 0 0 / 12%);
+  color: rgb(255 255 255);
+  cursor: pointer;
+}
+
+header nav .nav-search button:hover {
+  background: rgb(0 0 0 / 20%);
+}
+
+header nav .nav-search button:focus-visible {
+  outline: 2px solid var(--secondary-color);
+  outline-offset: 1px;
+}
+
+header nav .nav-search button .nav-search-icon {
+  display: block;
+  width: 16px;
+  height: 16px;
+  background: currentcolor;
+  mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'><circle cx='11' cy='11' r='7' stroke='currentColor' stroke-width='2'/><path d='m20 20-3.5-3.5' stroke='currentColor' stroke-width='2' stroke-linecap='round'/></svg>");
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+}
+
+/* The fragment ships an authoring icon span; replaced visually by the styled form. */
+header nav .nav-tools .icon-search {
+  display: none;
+}
+
+/* ---------------- Sections (primary nav) ---------------- */
+
 header nav .nav-sections {
-  grid-area: sections;
-  flex: 1 1 auto;
   display: none;
   visibility: hidden;
+  min-width: 0;
 }
 
 header nav[aria-expanded="true"] .nav-sections {
   display: block;
   visibility: visible;
-  align-self: start;
+  align-self: stretch;
 }
 
 header nav .nav-sections ul {
   list-style: none;
-  padding-left: 0;
-  font-size: var(--body-font-size);
+  margin: 0;
+  padding: 0;
+  font-size: var(--header-nav-link-size);
 }
 
-header nav .nav-sections ul > li {
-  font-weight: 500;
+/* ---------------- Mobile drawer & accordion (< 768px) ---------------- */
+
+@media (width < 768px) {
+  header .nav-wrapper:has(nav[aria-expanded="true"]) {
+    inset: 0;
+    height: 100dvh;
+    min-height: 100dvh;
+    background: linear-gradient(
+      var(--secondary-color) 0,
+      var(--secondary-color) var(--header-gold-stripe-height),
+      var(--primary-color) var(--header-gold-stripe-height),
+      var(--primary-color) 100%
+    );
+  }
+
+  header nav[aria-expanded="true"] {
+    position: fixed;
+    inset: 0;
+    z-index: 260;
+    margin: 0;
+    max-width: none;
+    min-height: 100dvh;
+    height: 100dvh;
+    padding: calc(env(safe-area-inset-top, 0px) + 4px) 16px calc(env(safe-area-inset-bottom, 0px) + 16px);
+    pointer-events: auto;
+  }
+
+  header nav[aria-expanded="true"] .nav-sections {
+    overflow: hidden auto;
+    overscroll-behavior: contain;
+    margin-top: 8px;
+  }
+
+  header nav .nav-sections .nav-root-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  /*
+   * Sub-item styles first (lower specificity) so stylelint's
+   * descending-specificity check is satisfied; the colour-bar styles
+   * for the parent list items follow.
+   */
+
+  /* Sub-section panel: white container that drops below the coloured bar */
+  header nav .nav-drop > ul,
+  header nav .nav-drop > ol {
+    display: none;
+    margin: 0;
+    padding: 0;
+    background: rgb(255 255 255);
+    list-style: none;
+  }
+
+  /* Nested third-level lists just inset slightly; no special chrome */
+  header nav .nav-drop > ul ul,
+  header nav .nav-drop > ol ol,
+  header nav .nav-drop > ul ol,
+  header nav .nav-drop > ol ul {
+    margin: 0;
+    padding-left: 16px;
+  }
+
+  header nav .nav-drop[aria-expanded="true"] > ul,
+  header nav .nav-drop[aria-expanded="true"] > ol {
+    display: block;
+  }
+
+  /* Each sub-item row: white background, dark text */
+  header nav .nav-drop > ul > li,
+  header nav .nav-drop > ol > li {
+    margin: 0;
+    padding: 0;
+    background: rgb(255 255 255);
+  }
+
+  /* Divider between sibling rows — sibling combinator avoids pseudo-class
+     specificity that conflicts with nav-root-list rules below */
+  header nav .nav-drop > ul > li + li,
+  header nav .nav-drop > ol > li + li {
+    border-top: 1px solid rgb(0 0 0 / 12%);
+  }
+
+  /* Sub-link: dark on white with right-arrow → glyph */
+  header nav .nav-drop > ul a:any-link,
+  header nav .nav-drop > ol a:any-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    box-sizing: border-box;
+    min-height: 48px;
+    padding: 12px 20px;
+    color: var(--text-color);
+    background: rgb(255 255 255);
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.4;
+    text-decoration: none;
+    white-space: normal;
+  }
+
+  header nav .nav-drop > ul a:any-link::after,
+  header nav .nav-drop > ol a:any-link::after {
+    content: "";
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    background: currentcolor;
+    mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='currentColor' d='m15 19l-1.425-1.4l4.6-4.6H2v-2h16.175L13.6 6.4L15 5l7 7z'/></svg>");
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+  }
+
+  header nav .nav-drop > ul a:any-link:hover,
+  header nav .nav-drop > ol a:any-link:hover {
+    background: rgb(0 0 0 / 4%);
+    color: var(--text-color);
+    text-decoration: none;
+  }
+
+  header nav .nav-drop > ul a:any-link:focus-visible,
+  header nav .nav-drop > ol a:any-link:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: -2px;
+  }
+
+  /* Top-level rows: full-width coloured section bars with chevron */
+  header nav .nav-sections .nav-root-list > li {
+    position: relative;
+    background: var(--header-section-blue);
+    color: rgb(255 255 255);
+    border-bottom: 1px solid rgb(255 255 255 / 16%);
+  }
+
+  header nav .nav-sections .nav-root-list > li > a:any-link,
+  header nav .nav-sections .nav-root-list > li > p > a:any-link {
+    display: block;
+    padding: 14px 44px 14px 16px;
+    color: rgb(255 255 255);
+    font-size: 1rem;
+    font-weight: 500;
+  }
+
+  /* Per-section colours, in source order: blue / green / purple / red */
+  header nav .nav-sections .nav-root-list > li:nth-child(2) {
+    background: var(--header-section-green);
+  }
+
+  header nav .nav-sections .nav-root-list > li:nth-child(3) {
+    background: var(--header-section-purple);
+  }
+
+  header nav .nav-sections .nav-root-list > li:nth-child(4) {
+    background: var(--header-section-red);
+  }
+
+  header nav .nav-sections .nav-root-list > li:nth-child(n + 5) {
+    background: var(--header-section-blue);
+  }
+
+  /* Right-side chevron, rotates 180° when section is expanded */
+  header nav .nav-sections .nav-root-list > li.nav-drop::after {
+    content: "";
+    position: absolute;
+    top: 22px;
+    right: 18px;
+    width: 0.55em;
+    height: 0.55em;
+    border: 0.12em solid currentcolor;
+    border-top: 0;
+    border-left: 0;
+    transform: rotate(45deg);
+    transform-origin: 50% 50%;
+    transition: transform 0.15s ease;
+  }
+
+  header nav .nav-sections .nav-root-list > li.nav-drop[aria-expanded="true"]::after {
+    transform: rotate(225deg) translate(-2px, -2px);
+  }
+
+  /* Search row inside the drawer */
+  header nav[aria-expanded="true"] .nav-tools .nav-search {
+    width: 100%;
+    height: 40px;
+  }
+
+  header nav[aria-expanded="true"] .nav-tools .nav-search input[type="search"] {
+    flex: 1 1 auto;
+    width: auto;
+  }
+
+  header nav[aria-expanded="true"] .nav-tools .nav-search button {
+    width: 44px;
+  }
 }
 
-header nav .nav-sections ul > li > ul {
-  margin-top: 0;
-}
+/* ---------------- Desktop primary nav + mega menu (>= 768px) ---------------- */
 
-header nav .nav-sections ul > li > ul > li {
-  font-weight: 400;
-}
-
-@media (width >= 900px) {
+@media (width >= 768px) {
   header nav .nav-sections {
     display: block;
     visibility: visible;
@@ -194,86 +680,127 @@ header nav .nav-sections ul > li > ul > li {
   }
 
   header nav[aria-expanded="true"] .nav-sections {
-    align-self: unset;
+    align-self: center;
   }
 
   header nav .nav-sections .nav-drop {
     position: relative;
-    padding-right: 16px;
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 0;
+    margin: 0;
     cursor: pointer;
   }
 
   header nav .nav-sections .nav-drop::after {
     content: "";
     display: inline-block;
-    position: absolute;
-    top: 0.5em;
-    right: 2px;
-    transform: rotate(135deg);
-    width: 6px;
-    height: 6px;
-    border: 2px solid currentcolor;
-    border-radius: 0 1px 0 0;
-    border-width: 2px 2px 0 0;
+    flex-shrink: 0;
+    width: 0.4em;
+    height: 0.4em;
+    margin-left: 2px;
+    border: 0.1em solid currentcolor;
+    border-top: 0;
+    border-left: 0;
+    transform: rotate(45deg) translateY(-0.05em);
+    transform-origin: 50% 50%;
+    transition: transform 0.15s ease;
   }
 
   header nav .nav-sections .nav-drop[aria-expanded="true"]::after {
-    top: unset;
-    bottom: 0.5em;
-    transform: rotate(315deg);
+    transform: rotate(225deg) translateY(0.1em);
   }
 
-  header nav .nav-sections ul {
+  header nav .nav-sections .nav-root-list {
     display: flex;
-    gap: 24px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0 16px;
     margin: 0;
   }
 
-  header nav .nav-sections .default-content-wrapper > ul > li {
+  header nav .nav-sections .nav-root-list > li {
     flex: 0 1 auto;
-    position: relative;
+    position: static;
   }
 
-  header nav .nav-sections .default-content-wrapper > ul > li > ul {
+  /* Mega menu panel: white card under the green bar, centred, max 1024px */
+  header nav .nav-sections .nav-root-list > li > ul,
+  header nav .nav-sections .nav-root-list > li > ol {
     display: none;
-    position: relative;
-  }
-
-  header
-    nav
-    .nav-sections
-    .default-content-wrapper
-    > ul
-    > li[aria-expanded="true"]
-    > ul {
-    display: block;
     position: absolute;
-    left: -24px;
-    width: 200px;
-    top: 150%;
-    padding: 16px;
-    background-color: var(--light-color);
-    white-space: initial;
+    box-sizing: border-box;
+    left: 50%;
+    top: 100%;
+    width: calc(100vw - 32px);
+    max-width: var(--header-mega-max-width);
+    transform: translateX(-50%);
+    margin: 0;
+    padding: 16px 20px;
+    background: var(--background-color);
+    box-shadow: 0 12px 32px rgb(0 0 0 / 18%);
+    z-index: 150;
+    white-space: normal;
   }
 
-  header nav .nav-sections .default-content-wrapper > ul > li > ul::before {
+  header nav .nav-sections .nav-root-list > li[aria-expanded="true"] > ul,
+  header nav .nav-sections .nav-root-list > li[aria-expanded="true"] > ol {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--header-mega-min-col-width), 1fr));
+    gap: 4px 16px;
+  }
+
+  header nav .nav-sections .nav-root-list > li > ul > li,
+  header nav .nav-sections .nav-root-list > li > ol > li {
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+  }
+
+  /* Blue pill primary-section link with a right-arrow glyph (DOC ranginui-digital-500) */
+  header nav .nav-sections .nav-root-list > li > ul a:any-link,
+  header nav .nav-sections .nav-root-list > li > ol a:any-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    box-sizing: border-box;
+    min-height: 48px;
+    padding: 12px 20px;
+    background: var(--header-section-blue);
+    color: rgb(255 255 255);
+    font-size: 1rem;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: normal;
+  }
+
+  header nav .nav-sections .nav-root-list > li > ul a:any-link::after,
+  header nav .nav-sections .nav-root-list > li > ol a:any-link::after {
     content: "";
-    position: absolute;
-    top: -8px;
-    left: 16px;
-    width: 0;
-    height: 0;
-    border-left: 8px solid transparent;
-    border-right: 8px solid transparent;
-    border-bottom: 8px solid var(--light-color);
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    background: currentcolor;
+    mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='currentColor' d='m15 19l-1.425-1.4l4.6-4.6H2v-2h16.175L13.6 6.4L15 5l7 7z'/></svg>");
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
   }
 
-  header nav .nav-sections .default-content-wrapper > ul > li > ul > li {
-    padding: 8px 0;
+  header nav .nav-sections .nav-root-list > li > ul a:any-link:hover,
+  header nav .nav-sections .nav-root-list > li > ol a:any-link:hover {
+    background: var(--header-section-blue-hover);
+    color: rgb(255 255 255);
+    text-decoration: none;
   }
-}
 
-/* tools */
-header nav .nav-tools {
-  grid-area: tools;
+  header nav .nav-sections .nav-root-list > li > ul a:any-link:focus-visible,
+  header nav .nav-sections .nav-root-list > li > ol a:any-link:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
 }
