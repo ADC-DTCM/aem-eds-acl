@@ -169,6 +169,10 @@
     ]
   },
   {
+    "id": "carousel-slide",
+    "fields": []
+  },
+  {
     "id": "columns",
     "fields": [
       {
@@ -229,10 +233,6 @@
         "label": "Reference"
       }
     ]
-  },
-  {
-    "id": "carousel-slide",
-    "fields": []
   },
   {
     "id": "hero",
@@ -390,6 +390,131 @@
         "component": "select",
         "name": "textContent_cta2Style",
         "label": "CTA 2 Style",
+        "options": [
+          {
+            "name": "Primary",
+            "value": "primary"
+          },
+          {
+            "name": "Secondary",
+            "value": "secondary"
+          },
+          {
+            "name": "Black",
+            "value": "black"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "teaserv2",
+    "fields": [
+      {
+        "component": "select",
+        "name": "classes",
+        "label": "Variant",
+        "valueType": "string",
+        "value": "half-and-half",
+        "options": [
+          {
+            "name": "Half & Half",
+            "value": "half-and-half"
+          },
+          {
+            "name": "9x3",
+            "value": "9x3"
+          }
+        ]
+      },
+      {
+        "component": "reference",
+        "name": "image",
+        "label": "Image",
+        "valueType": "string",
+        "multi": false
+      },
+      {
+        "component": "text",
+        "name": "imageAlt",
+        "label": "Alt Text",
+        "valueType": "string"
+      },
+      {
+        "component": "text",
+        "name": "title",
+        "label": "Title",
+        "valueType": "string",
+        "required": true
+      },
+      {
+        "component": "richtext",
+        "name": "description",
+        "label": "Description",
+        "valueType": "string",
+        "required": true
+      },
+      {
+        "component": "tab",
+        "label": "CTA 1",
+        "name": "cta1Tab"
+      },
+      {
+        "component": "aem-content",
+        "name": "cta1_link",
+        "label": "Link",
+        "valueType": "string"
+      },
+      {
+        "component": "text",
+        "name": "cta1_linkText",
+        "label": "Text",
+        "valueType": "string"
+      },
+      {
+        "component": "select",
+        "name": "cta1_linkType",
+        "label": "Style",
+        "valueType": "string",
+        "value": "primary",
+        "options": [
+          {
+            "name": "Primary",
+            "value": "primary"
+          },
+          {
+            "name": "Secondary",
+            "value": "secondary"
+          },
+          {
+            "name": "Black",
+            "value": "black"
+          }
+        ]
+      },
+      {
+        "component": "tab",
+        "label": "CTA 2",
+        "name": "cta2Tab"
+      },
+      {
+        "component": "aem-content",
+        "name": "cta2_link",
+        "label": "Link",
+        "valueType": "string"
+      },
+      {
+        "component": "text",
+        "name": "cta2_linkText",
+        "label": "Text",
+        "valueType": "string"
+      },
+      {
+        "component": "select",
+        "name": "cta2_linkType",
+        "label": "Style",
+        "valueType": "string",
+        "value": "secondary",
         "options": [
           {
             "name": "Primary",
