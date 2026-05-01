@@ -29,21 +29,6 @@
     ]
   },
   {
-    "id": "columns",
-    "components": [
-      "column"
-    ]
-  },
-  {
-    "id": "column",
-    "components": [
-      "text",
-      "image",
-      "button",
-      "title"
-    ]
-  },
-  {
     "id": "carousel-container",
     "components": [
       "carousel-slide"
@@ -51,6 +36,27 @@
   },
   {
     "id": "carousel-slide",
+    "components": [
+      "text",
+      "image",
+      "button",
+      "title",
+      "cards",
+      "columns",
+      "fragment",
+      "teaser",
+      "feedback",
+      "carousel-container"
+    ]
+  },
+  {
+    "id": "columns",
+    "components": [
+      "column"
+    ]
+  },
+  {
+    "id": "column",
     "components": [
       "text",
       "image",

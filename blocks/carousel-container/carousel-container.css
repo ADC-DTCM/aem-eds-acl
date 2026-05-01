@@ -31,15 +31,15 @@
   cursor: pointer;
 }
 
-.carousel-container .carousel-prev:hover:not(:disabled),
-.carousel-container .carousel-next:hover:not(:disabled) {
-  background: var(--light-color, #f5f4f2);
-}
-
 .carousel-container .carousel-prev:disabled,
 .carousel-container .carousel-next:disabled {
   opacity: 0.35;
   cursor: not-allowed;
+}
+
+.carousel-container .carousel-prev:hover:not(:disabled),
+.carousel-container .carousel-next:hover:not(:disabled) {
+  background: var(--light-color, #f5f4f2);
 }
 
 .carousel-container .carousel-viewport {
@@ -47,8 +47,7 @@
   grid-auto-flow: column;
   grid-auto-columns: 100%;
   gap: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow: auto hidden;
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
   width: 100%;

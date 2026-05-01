@@ -2,7 +2,8 @@ import { decorateBlock, loadBlock } from '../../scripts/aem.js';
 import { moveInstrumentation } from '../../scripts/scripts.js';
 
 /**
- * Block names that may appear inside a slide (nested blocks). Must match folders under /blocks with a .js module.
+ * Block names that may appear inside a slide (nested blocks).
+ * Must match folders under /blocks with a .js module.
  */
 const NESTED_BLOCK_CLASSES = new Set([
   'cards',
@@ -15,14 +16,19 @@ const NESTED_BLOCK_CLASSES = new Set([
 ]);
 
 /**
- * Decorate and load nested blocks inside slides (not picked up by the top-level `decorateBlocks` selector).
+ * Decorate and load nested blocks inside slides
+ * (not picked up by the top-level `decorateBlocks` selector).
  * @param {HTMLElement} root
  */
 async function decorateNestedBlocksInSlides(root) {
   const pending = [];
   root.querySelectorAll('.carousel-slide div').forEach((div) => {
     const name = div.classList[0];
-    if (name && NESTED_BLOCK_CLASSES.has(name) && !div.classList.contains('block')) {
+    if (
+      name
+      && NESTED_BLOCK_CLASSES.has(name)
+      && !div.classList.contains('block')
+    ) {
       decorateBlock(div);
       pending.push(loadBlock(div));
     }
@@ -42,7 +48,10 @@ function scrollToSlide(viewport, slides, index, smooth) {
   const left = slides[clamped].offsetLeft;
   viewport.scrollTo({
     left,
-    behavior: smooth && !window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'smooth' : 'auto',
+    behavior:
+      smooth && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? 'smooth'
+        : 'auto',
   });
 }
 
@@ -92,7 +101,10 @@ export default async function decorate(block) {
   });
 
   const total = slides.length;
-  viewport.setAttribute('aria-label', total ? `Slide carousel, ${total} slides` : 'Empty carousel');
+  viewport.setAttribute(
+    'aria-label',
+    total ? `Slide carousel, ${total} slides` : 'Empty carousel',
+  );
 
   slides.forEach((slide, i) => {
     slide.setAttribute('aria-label', `Slide ${i + 1} of ${total}`);
@@ -138,7 +150,7 @@ export default async function decorate(block) {
 
   function updateIndexFromScroll() {
     if (!slides.length) return;
-    const { scrollLeft, clientWidth } = viewport;
+    const { scrollLeft } = viewport;
     let best = 0;
     let bestDist = Infinity;
     slides.forEach((slide, i) => {
