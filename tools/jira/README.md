@@ -72,6 +72,9 @@ See [`.env.example`](./.env.example). Required: `JIRA_API_TOKEN`,
 
 ## Behaviour
 
+For the full input-format contract (recognised keys, file-discovery
+rules, parser internals, edge cases) see [SPEC-FORMAT.md](./SPEC-FORMAT.md).
+
 - **Per-story or per-file Epic.** Each `### Story <id>: <title>` block
   becomes a Jira Story whose key is `<file-stem>-<id>` (e.g.
   `header2-H1`). Its parent Epic is resolved from a `### Epic:` line
