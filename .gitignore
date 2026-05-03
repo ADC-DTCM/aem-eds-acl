@@ -8,3 +8,10 @@ helix-importer-ui
 *.bak
 .idea
 .agents
+
+# tools/jira
+tools/jira/.venv/
+tools/jira/.env
+tools/jira/run-summary.json
+__pycache__/
+*.pyc
