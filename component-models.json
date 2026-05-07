@@ -150,6 +150,28 @@
     ]
   },
   {
+    "id": "accordion-item",
+    "fields": [
+      {
+        "component": "text",
+        "name": "title",
+        "label": "Title",
+        "valueType": "string",
+        "required": true
+      },
+      {
+        "component": "richtext",
+        "name": "body",
+        "label": "Body",
+        "valueType": "string"
+      }
+    ]
+  },
+  {
+    "id": "breadcrumbs",
+    "fields": []
+  },
+  {
     "id": "card",
     "fields": [
       {
@@ -188,6 +210,18 @@
         "name": "rows",
         "value": "",
         "label": "Rows"
+      }
+    ]
+  },
+  {
+    "id": "embed",
+    "fields": [
+      {
+        "component": "text",
+        "name": "url",
+        "label": "URL",
+        "valueType": "string",
+        "required": true
       }
     ]
   },
@@ -306,6 +340,18 @@
         "component": "aem-content",
         "name": "moreLink",
         "label": "More Link"
+      }
+    ]
+  },
+  {
+    "id": "tab",
+    "fields": [
+      {
+        "component": "text",
+        "name": "title",
+        "label": "Tab Title",
+        "valueType": "string",
+        "required": true
       }
     ]
   },

@@ -49,12 +49,18 @@
         "title",
         "hero",
         "cards",
+        "list",
         "columns",
         "fragment",
         "feedback",
         "news-cards",
         "teaser",
-        "carousel-container"
+        "teaserv2",
+        "carousel-container",
+        "accordion",
+        "breadcrumbs",
+        "embed",
+        "tabs"
       ]
     }
   ]
