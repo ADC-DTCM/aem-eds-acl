@@ -1,7 +1,9 @@
 [
   {
     "id": "main",
-    "components": ["section"]
+    "components": [
+      "section"
+    ]
   },
   {
     "id": "section",
@@ -17,17 +19,20 @@
       "feedback",
       "news-cards",
       "teaser",
-      "teaserv2",
       "carousel-container"
     ]
   },
   {
     "id": "cards",
-    "components": ["card"]
+    "components": [
+      "card"
+    ]
   },
   {
     "id": "carousel-container",
-    "components": ["carousel-slide"]
+    "components": [
+      "carousel-slide"
+    ]
   },
   {
     "id": "carousel-slide",
@@ -46,10 +51,23 @@
   },
   {
     "id": "columns",
-    "components": ["column"]
+    "components": [
+      "column"
+    ]
   },
   {
     "id": "column",
-    "components": ["text", "image", "button", "title"]
+    "components": [
+      "text",
+      "image",
+      "button",
+      "title"
+    ]
+  },
+  {
+    "id": "list",
+    "components": [
+      "list-item"
+    ]
   }
 ]

@@ -1,0 +1,42 @@
+.breadcrumbs nav ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25em 0.5em;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: var(--body-font-size-s);
+}
+
+.breadcrumbs nav ol li {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+/* Chevron separator between items */
+.breadcrumbs nav ol li + li::before {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border: 1.5px solid currentcolor;
+  border-width: 1.5px 1.5px 0 0;
+  transform: rotate(45deg);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.breadcrumbs nav ol li a {
+  color: var(--link-color);
+  text-decoration: none;
+}
+
+.breadcrumbs nav ol li a:hover {
+  text-decoration: underline;
+}
+
+.breadcrumbs nav ol li span[aria-current='page'] {
+  color: var(--text-color);
+  font-weight: 600;
+}

@@ -1,0 +1,9 @@
+/* list block styles */
+main .list ul {
+  list-style: disc;
+  padding-left: 1.5rem;
+}
+
+main .list li {
+  margin-bottom: 0.5rem;
+}
