@@ -36,7 +36,7 @@
       "id": "accordion-item",
       "fields": [
         {
-          "component": "text",
+          "component": "richtext",
           "name": "title",
           "label": "Title",
           "valueType": "string",
@@ -54,9 +54,7 @@
   "filters": [
     {
       "id": "accordion",
-      "components": [
-        "accordion-item"
-      ]
+      "components": ["accordion-item"]
     }
   ]
 }
