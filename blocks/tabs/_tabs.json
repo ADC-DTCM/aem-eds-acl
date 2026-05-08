@@ -24,7 +24,7 @@
             "resourceType": "core/franklin/components/block/v1/block/item",
             "template": {
               "name": "Tab",
-              "model": "tab"
+              "filter": "tab"
             }
           }
         }
@@ -40,7 +40,7 @@
           "name": "title",
           "label": "Tab Title",
           "valueType": "string",
-          "required": true
+          "value": ""
         }
       ]
     }
@@ -49,6 +49,23 @@
     {
       "id": "tabs",
       "components": ["tab"]
+    },
+    {
+      "id": "tab",
+      "components": [
+        "text",
+        "image",
+        "button",
+        "title",
+        "cards",
+        "columns",
+        "fragment",
+        "teaser",
+        "teaserv2",
+        "hero",
+        "accordion",
+        "embed"
+      ]
     }
   ]
 }

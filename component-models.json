@@ -352,7 +352,7 @@
         "name": "title",
         "label": "Tab Title",
         "valueType": "string",
-        "required": true
+        "value": ""
       }
     ]
   },

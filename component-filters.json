@@ -87,5 +87,22 @@
     "components": [
       "tab"
     ]
+  },
+  {
+    "id": "tab",
+    "components": [
+      "text",
+      "image",
+      "button",
+      "title",
+      "cards",
+      "columns",
+      "fragment",
+      "teaser",
+      "teaserv2",
+      "hero",
+      "accordion",
+      "embed"
+    ]
   }
 ]
