@@ -157,13 +157,14 @@
         "name": "title",
         "label": "Title",
         "valueType": "string",
-        "required": true
+        "value": ""
       },
       {
         "component": "richtext",
         "name": "body",
         "label": "Body",
-        "valueType": "string"
+        "valueType": "string",
+        "value": ""
       }
     ]
   },
