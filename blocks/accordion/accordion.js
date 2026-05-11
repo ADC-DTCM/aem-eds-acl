@@ -16,7 +16,9 @@ export default function decorate(block) {
     body.className = 'accordion-item-body';
     // decorate accordion item
     const details = document.createElement('details');
-    details.className = 'accordion-item';
+    // preserve Universal Editor instrumentation attributes from the original row
+    [...row.attributes].forEach((attr) => details.setAttribute(attr.name, attr.value));
+    details.classList.add('accordion-item');
     details.append(summary, body);
     row.replaceWith(details);
   });
