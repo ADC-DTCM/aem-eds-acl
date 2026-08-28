@@ -70,40 +70,268 @@ function buildAutoBlocks() {
   }
 }
 
+const BUTTON_VARIANTS = [
+  'primary',
+  'secondary',
+  'outline',
+  'ghost',
+  'ghost-inverted',
+  'destructive',
+  'link',
+];
+
+const BUTTON_MODIFIERS = [
+  'round',
+  'new-tab',
+  'icon-left',
+  'icon-right',
+  'disabled',
+];
+
+const RESERVED_ICON_CLASSES = new Set(['icon-left', 'icon-right', 'icon-only']);
+
+const MODIFIER_TEXT = new Set(['round', 'rounded', 'disabled', 'new-tab']);
+
+/**
+ * Turns `:iconname:` tokens in a button into `span.icon` (DA and UE text).
+ * @param {Element} root
+ */
+function materializeIconTokens(root) {
+  const tokenRe = /:([a-z0-9-]+):/gi;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const textNodes = [];
+  let node = walker.nextNode();
+  while (node) {
+    tokenRe.lastIndex = 0;
+    if (tokenRe.test(node.textContent)) textNodes.push(node);
+    node = walker.nextNode();
+  }
+
+  textNodes.forEach((textNode) => {
+    const frag = document.createDocumentFragment();
+    const parts = textNode.textContent.split(/:([a-z0-9-]+):/gi);
+    parts.forEach((part, index) => {
+      if (!part) return;
+      if (index % 2 === 1) {
+        const icon = document.createElement('span');
+        icon.className = `icon icon-${part}`;
+        frag.append(icon);
+      } else {
+        frag.append(document.createTextNode(part));
+      }
+    });
+    textNode.replaceWith(frag);
+  });
+}
+
+/**
+ * Icon name from a dedicated Icon field that published as data-icon or icon-* class.
+ * @param {HTMLAnchorElement} a
+ * @returns {string}
+ */
+function getAuthoredIconName(a) {
+  const fromData = a.getAttribute('data-icon') || a.dataset.icon;
+  if (fromData) return fromData.replace(/^icon-/, '').trim();
+
+  const fromClass = [...a.classList].find((cls) => (
+    cls.startsWith('icon-') && !RESERVED_ICON_CLASSES.has(cls)
+  ));
+  return fromClass ? fromClass.slice(5) : '';
+}
+
+/**
+ * Ensures authored icons exist as `span.icon` inside the button.
+ * @param {HTMLAnchorElement} a
+ * @param {HTMLParagraphElement} p
+ */
+function ensureButtonIcons(a, p) {
+  materializeIconTokens(a);
+
+  p.querySelectorAll(':scope > .icon').forEach((icon) => {
+    if (!a.contains(icon)) a.append(icon);
+  });
+
+  if (!a.querySelector('.icon')) {
+    const name = getAuthoredIconName(a);
+    if (name) {
+      const icon = document.createElement('span');
+      icon.className = `icon icon-${name}`;
+      a.prepend(icon);
+    }
+  }
+
+  decorateIcons(a);
+}
+
+/**
+ * Visible text of a node, ignoring icons and images.
+ * @param {Element} el
+ * @returns {string}
+ */
+function getButtonLabel(el) {
+  const clone = el.cloneNode(true);
+  clone.querySelectorAll('.icon, img').forEach((node) => node.remove());
+  return clone.textContent.replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Resolves the button variation from classes or DA formatting (bold/italic).
+ * @param {HTMLAnchorElement} a
+ * @param {Element|null} strong
+ * @param {Element|null} em
+ * @returns {string|null}
+ */
+function getButtonVariant(a, strong, em) {
+  const fromClass = BUTTON_VARIANTS.find((variant) => (
+    a.classList.contains(variant) || a.classList.contains(`button--${variant}`)
+  ));
+  if (fromClass) return fromClass;
+  if (a.classList.contains('accent')) return 'primary';
+  if (strong && em) return 'primary';
+  if (strong) return 'primary';
+  if (em) return 'secondary';
+  return null;
+}
+
+/**
+ * Collects modifier class names from the link, paragraph, and UE text nodes.
+ * @param {HTMLAnchorElement} a
+ * @param {HTMLParagraphElement} p
+ * @returns {string[]}
+ */
+function getButtonModifiers(a, p) {
+  const mods = BUTTON_MODIFIERS.filter((mod) => (
+    a.classList.contains(mod)
+    || a.classList.contains(`button--${mod}`)
+    || p.classList.contains(mod)
+    || p.classList.contains(`button--${mod}`)
+  ));
+
+  [...p.childNodes].forEach((node) => {
+    if (node.nodeType !== Node.TEXT_NODE) return;
+    const text = node.textContent.trim().toLowerCase();
+    if (!MODIFIER_TEXT.has(text)) return;
+    const mod = text === 'rounded' ? 'round' : text;
+    if (!mods.includes(mod)) mods.push(mod);
+    node.textContent = '';
+  });
+
+  return mods;
+}
+
+/**
+ * Applies BEM aliases, icon placement, new-tab, and disabled behavior.
+ * @param {HTMLAnchorElement} a
+ * @param {HTMLParagraphElement} p
+ * @param {object} [precomputed]
+ * @param {string|null} [precomputed.variant]
+ * @param {string[]} [precomputed.modifiers]
+ */
+function applyButtonChrome(a, p, precomputed = {}) {
+  const variant = precomputed.variant ?? getButtonVariant(a, null, null);
+  const modifiers = precomputed.modifiers ?? getButtonModifiers(a, p);
+
+  BUTTON_VARIANTS.forEach((name) => {
+    a.classList.remove(name, `button--${name}`);
+  });
+  BUTTON_MODIFIERS.forEach((name) => {
+    a.classList.remove(name, `button--${name}`);
+  });
+
+  if (variant) a.classList.add(variant, `button--${variant}`);
+  modifiers.forEach((mod) => {
+    a.classList.add(mod, `button--${mod}`);
+  });
+
+  if (variant !== 'link') ensureButtonIcons(a, p);
+
+  const label = getButtonLabel(a);
+  let icons = [...a.querySelectorAll(':scope > .icon, :scope .icon')];
+
+  if (variant === 'link') {
+    icons.forEach((icon) => icon.remove());
+    icons = [];
+    a.classList.remove('icon-only', 'button--icon-only', 'icon-left', 'button--icon-left', 'icon-right', 'button--icon-right');
+  }
+
+  if (label) a.title = a.title || label;
+
+  if (!label && icons.length) {
+    a.classList.add('icon-only', 'button--icon-only');
+    if (!a.getAttribute('aria-label')) {
+      a.setAttribute('aria-label', a.title || 'Button');
+    }
+  }
+
+  if (modifiers.includes('new-tab')) {
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+  }
+
+  if (modifiers.includes('disabled') && a.dataset.buttonDisabled !== 'true') {
+    a.dataset.buttonDisabled = 'true';
+    a.setAttribute('aria-disabled', 'true');
+    a.setAttribute('tabindex', '-1');
+    a.addEventListener('click', (event) => event.preventDefault());
+  }
+
+  if (icons.length) {
+    if (modifiers.includes('icon-right')) {
+      icons.forEach((icon) => a.append(icon));
+    } else {
+      [...icons].reverse().forEach((icon) => a.prepend(icon));
+    }
+  }
+}
+
 /**
  * Decorates formatted links to style them as buttons.
  * @param {HTMLElement} main The main container element
  */
 export function decorateButtons(main) {
   main.querySelectorAll('p a[href]').forEach((a) => {
-    a.title = a.title || a.textContent;
     const p = a.closest('p');
-    const text = a.textContent.trim();
+    if (!p) return;
 
-    // quick structural checks
-    if (a.querySelector('img') || p.textContent.trim() !== text) return;
+    if (a.classList.contains('button')) {
+      applyButtonChrome(a, p);
+      return;
+    }
 
-    // skip URL display links
-    try {
-      if (new URL(a.href).href === new URL(text, window.location).href) return;
-    } catch { /* continue */ }
+    const hasNonIconImage = [...a.querySelectorAll('img')]
+      .some((img) => !img.closest('.icon'));
+    if (hasNonIconImage) return;
 
-    // require authored formatting for buttonization
+    const label = getButtonLabel(a);
+    if (getButtonLabel(p) !== label) return;
+
     const strong = a.closest('strong');
     const em = a.closest('em');
-    if (!strong && !em) return;
+    const icons = [...a.querySelectorAll(':scope > .icon, :scope .icon')];
+    const variant = getButtonVariant(a, strong, em);
+
+    if (!variant && !icons.length) return;
+    const resolvedVariant = variant || 'primary';
+
+    try {
+      if (label && new URL(a.href).href === new URL(label, window.location).href) return;
+    } catch { /* continue */ }
+
+    const modifiers = getButtonModifiers(a, p);
 
     p.className = 'button-wrapper';
     a.className = 'button';
-    if (strong && em) { // high-impact call-to-action
-      a.classList.add('accent');
+    applyButtonChrome(a, p, {
+      variant: resolvedVariant,
+      modifiers,
+    });
+
+    if (strong && em) {
       const outer = strong.contains(em) ? strong : em;
       outer.replaceWith(a);
     } else if (strong) {
-      a.classList.add('primary');
       strong.replaceWith(a);
-    } else {
-      a.classList.add('secondary');
+    } else if (em) {
       em.replaceWith(a);
     }
   });
