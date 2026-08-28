@@ -1,0 +1,11 @@
+{
+  "paths": {
+    "mappings": [
+      "/content/aem-eds-acl/:/"
+    ],
+    "includes": [
+      "/content/aem-eds-acl/"
+    ],
+    "excludes": []
+  }
+}
