@@ -54,7 +54,6 @@
                 "template": {
                   "model": "button",
                   "linkType": "primary",
-                  "classes": "",
                   "disabled": false,
                   "openInNewTab": false
                 }
