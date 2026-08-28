@@ -88,62 +88,31 @@ const BUTTON_MODIFIERS = [
   'disabled',
 ];
 
+const MODIFIER_TEXT_VALUES = new Set(['round', 'rounded', 'new-tab', 'disabled']);
+
 const RESERVED_ICON_CLASSES = new Set(['icon-left', 'icon-right', 'icon-only']);
 
+/** Longest labels first so "Ghost Inverted" wins over "Ghost". */
+const VARIANT_LABELS = [
+  ['ghost inverted', 'ghost-inverted'],
+  ['ghost-inverted', 'ghost-inverted'],
+  ['destructive', 'destructive'],
+  ['secondary', 'secondary'],
+  ['outline', 'outline'],
+  ['primary', 'primary'],
+  ['ghost', 'ghost'],
+  ['link', 'link'],
+];
+
 /**
- * @param {Element|null|undefined} el
- * @param {string} prop
+ * Maps visible link text to a button variant (UE labels without published classes).
+ * @param {string} label
  * @returns {string|null}
  */
-function readUeProp(el, prop) {
-  if (!el) return null;
-  const value = el.getAttribute(`data-aue-prop-${prop}`);
-  return value == null || value === '' ? null : value;
-}
-
-/**
- * @param {Element} el
- * @returns {Element|null}
- */
-function findButtonContainer(el) {
-  return el.closest('[data-aue-model="button"]');
-}
-
-/**
- * @param {string} raw
- * @param {Set<string>} mods
- */
-function ingestModifierTokens(raw, mods) {
-  String(raw).split(/[\s,]+/).forEach((token) => {
-    const normalized = token.trim().toLowerCase();
-    if (!normalized) return;
-    const mod = normalized === 'rounded' ? 'round' : normalized;
-    if (BUTTON_MODIFIERS.includes(mod)) mods.add(mod);
-  });
-}
-
-/**
- * Syncs persisted UE props onto anchors before decoration (author reload / patch).
- * @param {HTMLElement} main
- */
-function primeButtonProps(main) {
-  main.querySelectorAll('[data-aue-model="button"]').forEach((container) => {
-    const anchor = container.querySelector('a[href]');
-    if (!anchor) return;
-
-    const linkType = readUeProp(container, 'linktype') || readUeProp(anchor, 'linktype');
-    if (linkType && BUTTON_VARIANTS.includes(linkType)) {
-      anchor.classList.add(linkType);
-    }
-
-    [container, anchor].forEach((el) => {
-      const classes = readUeProp(el, 'classes');
-      if (!classes) return;
-      const mods = new Set();
-      ingestModifierTokens(classes, mods);
-      mods.forEach((mod) => anchor.classList.add(mod));
-    });
-  });
+function getVariantFromLabel(label) {
+  const normalized = label.toLowerCase().trim();
+  const match = VARIANT_LABELS.find(([text]) => text === normalized);
+  return match ? match[1] : null;
 }
 
 /**
@@ -228,6 +197,45 @@ function getButtonLabel(el) {
   return clone.textContent.replace(/\s+/g, ' ').trim();
 }
 
+function getButtonUeContainer(a) {
+  return a.closest('[data-aue-model="button"]') || a.closest('.button-wrapper') || a.closest('p');
+}
+
+/** Maps model field names to UE data-aue-prop-* suffixes. */
+const UE_PROP_ALIASES = {
+  linkType: 'linktype',
+  openInNewTab: 'open-in-new-tab',
+};
+
+function toUePropAttr(name) {
+  if (UE_PROP_ALIASES[name]) return UE_PROP_ALIASES[name];
+  return name.replace(/([A-Z])/g, '-$1').toLowerCase();
+}
+
+/**
+ * Reads a UE property from data attributes (supports camelCase dataset keys).
+ * @param {Element} el
+ * @param {string} prop
+ * @returns {string|null}
+ */
+function readUeProp(el, prop) {
+  if (!el) return null;
+  const names = prop === 'linktype' ? ['linktype', 'link-type', 'linkType'] : [prop];
+  for (let i = 0; i < names.length; i += 1) {
+    const attr = el.getAttribute(`data-aue-prop-${names[i]}`);
+    if (attr != null && attr !== '') return attr;
+  }
+  if (prop === 'linktype') {
+    const match = [...el.attributes].find(({ name, value }) => (
+      name.startsWith('data-aue-prop-link') && name.includes('type') && value
+    ));
+    if (match) return match.value;
+  }
+  const camel = prop.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+  const fromDataset = el.dataset?.[camel];
+  return fromDataset != null && fromDataset !== '' ? fromDataset : null;
+}
+
 /**
  * Resolves the button variation from classes or DA formatting (bold/italic).
  * @param {HTMLAnchorElement} a
@@ -241,59 +249,329 @@ function getButtonVariant(a, strong, em) {
   ));
   if (fromClass) return fromClass;
 
-  const container = findButtonContainer(a);
+  const container = getButtonUeContainer(a);
   const linkTypeAttr = readUeProp(a, 'linktype')
+    || readUeProp(a, 'link-type')
     || readUeProp(container, 'linktype')
+    || readUeProp(container, 'link-type')
     || a.getAttribute('data-linktype')
     || a.dataset?.linkType;
   if (linkTypeAttr && BUTTON_VARIANTS.includes(linkTypeAttr)) return linkTypeAttr;
 
+  const fromTitle = getVariantFromLabel(a.getAttribute('title') || '');
+  if (fromTitle) return fromTitle;
+
+  const fromLabel = getVariantFromLabel(getButtonLabel(a));
+  if (fromLabel) return fromLabel;
   if (a.classList.contains('accent')) return 'primary';
   if (strong && em) return 'primary';
   if (strong) return 'primary';
   if (em) return 'secondary';
-  // UE may publish Options without the variation class (e.g. class="button round").
+  // UE buttons default to primary; Options (e.g. round) must not drop the variant.
   if (a.classList.contains('button')) return 'primary';
   return null;
 }
 
 /**
- * Collects modifier class names from the link, paragraph, and UE text nodes.
+ * Adds modifier tokens from a classes/shape value (string, CSV, or JSON array).
+ * @param {unknown} raw
+ * @param {Set<string>} found
+ */
+function ingestModifierValue(raw, found) {
+  if (raw == null || raw === '') return;
+  let tokens = [];
+  if (Array.isArray(raw)) {
+    tokens = raw;
+  } else {
+    const str = String(raw).trim();
+    if (str.startsWith('[')) {
+      try {
+        tokens = JSON.parse(str);
+      } catch {
+        tokens = str.split(/[\s,]+/);
+      }
+    } else {
+      tokens = str.split(/[\s,]+/);
+    }
+  }
+  tokens.forEach((cls) => {
+    const normalized = String(cls).trim().toLowerCase();
+    if (normalized === 'rounded') found.add('round');
+    else if (BUTTON_MODIFIERS.includes(normalized)) found.add(normalized);
+  });
+}
+
+/** UE property names that affect button decoration in the live canvas. */
+export const BUTTON_PATCH_PROPS = new Set([
+  'classes',
+  'classes_shape',
+  'classes-shape',
+  'linkType',
+  'disabled',
+  'openInNewTab',
+  'link',
+  'linkText',
+  'linkTitle',
+  'icon',
+  'iconPosition',
+]);
+
+/**
+ * Normalizes a UE patch payload from content-patch / content-update events.
+ * @param {CustomEvent['detail']} detail
+ * @returns {{ name: string, value: unknown }|null}
+ */
+export function getButtonPatchFromEvent(detail) {
+  if (detail?.patch?.name) return detail.patch;
+  const target = detail?.request?.target;
+  const name = target?.prop ?? target?.property;
+  if (!name) return null;
+  const value = detail?.request?.value ?? target?.value ?? detail?.request?.body?.value;
+  return { name, value };
+}
+
+/**
+ * Finds button containers related to a patched UE resource.
+ * @param {Element|null} root
+ * @returns {Element[]}
+ */
+function findButtonContainers(root) {
+  if (!root?.matches) return [];
+  if (root.matches('[data-aue-model="button"]')) return [root];
+  const owned = root.closest('[data-aue-model="button"]');
+  if (owned) return [owned];
+  if (root.matches('p') && root.querySelector('a[href]')) return [root];
+  if (root.matches('a[href]')) {
+    const p = root.closest('p');
+    return p ? [p] : [];
+  }
+  return [];
+}
+
+/**
+ * Serializes a UE patch value for data-aue-prop-* attributes.
+ * @param {unknown} raw
+ * @returns {string|null}
+ */
+function serializePatchValue(raw) {
+  if (raw == null || raw === '') return null;
+  if (typeof raw === 'boolean') return raw ? 'true' : 'false';
+  if (Array.isArray(raw)) {
+    const joined = raw.filter(Boolean).join(' ').trim();
+    return joined || null;
+  }
+  return String(raw);
+}
+
+/**
+ * Applies classes/disabled/new-tab from a patch directly on the anchor for instant preview.
+ * @param {HTMLAnchorElement|null} anchor
+ * @param {string} prop
+ * @param {unknown} rawValue
+ */
+function syncAnchorFromPatch(anchor, prop, rawValue) {
+  if (!anchor) return;
+  const kebab = toUePropAttr(prop);
+
+  if (kebab === 'classes' || kebab.startsWith('classes-')) {
+    const found = new Set();
+    ingestModifierValue(rawValue, found);
+    ['round', 'disabled', 'new-tab'].forEach((mod) => {
+      if (found.has(mod)) anchor.classList.add(mod, `button--${mod}`);
+      else anchor.classList.remove(mod, `button--${mod}`);
+    });
+    if (found.has('new-tab')) {
+      anchor.target = '_blank';
+      anchor.rel = 'noopener noreferrer';
+    } else if (!anchor.classList.contains('new-tab')) {
+      anchor.removeAttribute('target');
+      anchor.removeAttribute('rel');
+    }
+  }
+
+  if (kebab === 'linktype') {
+    BUTTON_VARIANTS.forEach((variant) => {
+      anchor.classList.remove(variant, `button--${variant}`);
+    });
+    const next = String(rawValue || '').trim();
+    if (next && BUTTON_VARIANTS.includes(next)) {
+      anchor.classList.add(next, `button--${next}`);
+    }
+  }
+
+  if (kebab === 'disabled') {
+    const on = rawValue === true || rawValue === 'true';
+    if (on) anchor.classList.add('disabled', 'button--disabled');
+    else anchor.classList.remove('disabled', 'button--disabled');
+  }
+
+  if (kebab === 'open-in-new-tab') {
+    const on = rawValue === true || rawValue === 'true';
+    if (on) {
+      anchor.classList.add('new-tab', 'button--new-tab');
+      anchor.target = '_blank';
+      anchor.rel = 'noopener noreferrer';
+    } else {
+      anchor.classList.remove('new-tab', 'button--new-tab');
+      anchor.removeAttribute('target');
+      anchor.removeAttribute('rel');
+    }
+  }
+}
+
+/**
+ * Applies a UE property-panel patch to button containers before decoration.
+ * @param {Element} root
+ * @param {{ name?: string, value?: unknown }} patch
+ */
+export function applyButtonPatchFromUe(root, patch) {
+  if (!root?.querySelector && !root?.matches) return;
+  if (!patch?.name) return;
+  const prop = toUePropAttr(patch.name);
+  const targets = findButtonContainers(root);
+  if (!targets.length) return;
+
+  const value = serializePatchValue(patch.value);
+  const isEmpty = value == null;
+
+  targets.forEach((button) => {
+    const anchor = button.querySelector?.('a[href]') || (button.matches?.('a[href]') ? button : null);
+    if (isEmpty) {
+      button.removeAttribute(`data-aue-prop-${prop}`);
+      anchor?.removeAttribute(`data-aue-prop-${prop}`);
+    } else {
+      button.setAttribute(`data-aue-prop-${prop}`, value);
+      anchor?.setAttribute(`data-aue-prop-${prop}`, value);
+    }
+    syncAnchorFromPatch(anchor, patch.name, patch.value);
+  });
+}
+
+/**
+ * Adds modifier hits from classes or UE grouped `classes_*` fields.
+ * @param {Element|null} el
+ * @param {Set<string>} found
+ */
+function collectButtonModifiers(el, found) {
+  if (!el?.classList) return;
+  BUTTON_MODIFIERS.forEach((mod) => {
+    if (el.classList.contains(mod) || el.classList.contains(`button--${mod}`)) {
+      found.add(mod);
+    }
+  });
+
+  // Shape / Options from UE (`classes` multiselect, booleans, or patch props).
+  ingestModifierValue(readUeProp(el, 'classes'), found);
+
+  [...el.attributes].forEach(({ name, value }) => {
+    if (name.startsWith('data-aue-prop-') && name.includes('classes')) {
+      ingestModifierValue(value, found);
+    }
+  });
+
+  if (readUeProp(el, 'classes-shape') === 'round' || readUeProp(el, 'classes_shape') === 'round') {
+    found.add('round');
+  }
+
+  // Legacy grouped booleans (classes_disabled, classes_new-tab).
+  if (readUeProp(el, 'classes-disabled') === 'true' || readUeProp(el, 'classes_disabled') === 'true') {
+    found.add('disabled');
+  }
+  if (readUeProp(el, 'classes-new-tab') === 'true' || readUeProp(el, 'classes_new-tab') === 'true') {
+    found.add('new-tab');
+  }
+
+  // Button model booleans (persist in UE and publish as data attributes).
+  if (readUeProp(el, 'disabled') === 'true') found.add('disabled');
+  if (readUeProp(el, 'open-in-new-tab') === 'true' || readUeProp(el, 'openInNewTab') === 'true') {
+    found.add('new-tab');
+  }
+}
+
+/**
+ * UE may publish Shape / checkbox values as plain text beside the link (teaser CTA pattern).
+ * @param {HTMLAnchorElement} a
+ * @param {HTMLParagraphElement} p
+ * @param {Set<string>} found
+ */
+function harvestModifierTextNodes(a, p, found) {
+  if (!p) return;
+
+  const absorb = (el) => {
+    if (!el || el === a || el.contains(a)) return;
+    const text = el.textContent?.trim().toLowerCase();
+    if (!text || !MODIFIER_TEXT_VALUES.has(text)) return;
+    found.add(text);
+    el.remove();
+  };
+
+  [...p.childNodes].forEach((node) => {
+    if (node === a) return;
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent?.trim().toLowerCase();
+      if (text === 'rounded') {
+        found.add('round');
+        node.remove();
+      } else if (text && MODIFIER_TEXT_VALUES.has(text)) {
+        found.add(text);
+        node.remove();
+      }
+      return;
+    }
+    if (node.nodeType === Node.ELEMENT_NODE) absorb(node);
+  });
+
+  const next = p.nextElementSibling;
+  if (next?.matches('p') && !next.querySelector('a[href]')) absorb(next);
+}
+
+/**
+ * Collects modifier class names from the link, paragraph, and nearby wrappers.
  * @param {HTMLAnchorElement} a
  * @param {HTMLParagraphElement} p
  * @returns {string[]}
  */
 function getButtonModifiers(a, p) {
-  const mods = new Set(BUTTON_MODIFIERS.filter((mod) => (
-    a.classList.contains(mod)
-    || a.classList.contains(`button--${mod}`)
-    || p.classList.contains(mod)
-    || p.classList.contains(`button--${mod}`)
-  )));
+  const found = new Set();
+  collectButtonModifiers(a, found);
+  collectButtonModifiers(p, found);
+  harvestModifierTextNodes(a, p, found);
+  let ancestor = p?.parentElement;
+  for (let depth = 0; ancestor && depth < 4; depth += 1) {
+    collectButtonModifiers(ancestor, found);
+    ancestor = ancestor.parentElement;
+  }
+  return BUTTON_MODIFIERS.filter((mod) => found.has(mod));
+}
 
-  const container = findButtonContainer(a);
-  [a, p, container].forEach((el) => {
-    ingestModifierTokens(readUeProp(el, 'classes'), mods);
-  });
+/**
+ * Syncs persisted UE props onto anchors before decoration (author reload).
+ * @param {HTMLElement} main
+ */
+function primeButtonProps(main) {
+  main.querySelectorAll('[data-aue-model="button"]').forEach((container) => {
+    const anchor = container.querySelector('a[href]');
+    if (!anchor) return;
 
-  [...p.childNodes].forEach((node) => {
-    if (node.nodeType !== Node.TEXT_NODE) return;
-    const before = node.textContent;
-    const sizeBefore = mods.size;
-    ingestModifierTokens(before, mods);
-    if (mods.size > sizeBefore || !before.trim()) {
-      node.textContent = '';
+    const linkType = readUeProp(container, 'linktype') || readUeProp(anchor, 'linktype');
+    if (linkType && BUTTON_VARIANTS.includes(linkType)) {
+      anchor.classList.add(linkType);
     }
+
+    [container, anchor].forEach((el) => {
+      const classes = readUeProp(el, 'classes');
+      if (!classes) return;
+      const found = new Set();
+      ingestModifierValue(classes, found);
+      found.forEach((mod) => anchor.classList.add(mod));
+    });
   });
-
-  if (a.getAttribute('aria-disabled') === 'true') mods.add('disabled');
-  if (a.target === '_blank' && a.rel?.includes('noopener')) mods.add('new-tab');
-
-  return [...mods];
 }
 
 /**
  * Applies BEM aliases, icon placement, new-tab, and disabled behavior.
+ * Safe to re-run on already-published Franklin/UE buttons
+ * (`class="button primary round"`).
  * @param {HTMLAnchorElement} a
  * @param {HTMLParagraphElement} p
  * @param {object} [precomputed]
@@ -301,19 +579,26 @@ function getButtonModifiers(a, p) {
  * @param {string[]} [precomputed.modifiers]
  */
 function applyButtonChrome(a, p, precomputed = {}) {
-  const variant = precomputed.variant
-    ?? getButtonVariant(a, null, null)
-    ?? (a.classList.contains('button') ? 'primary' : null);
+  const variant = precomputed.variant ?? getButtonVariant(a, null, null);
   const modifiers = precomputed.modifiers ?? getButtonModifiers(a, p);
 
-  BUTTON_VARIANTS.forEach((name) => {
-    a.classList.remove(name, `button--${name}`);
+  BUTTON_MODIFIERS.forEach((mod) => {
+    a.classList.remove(mod, `button--${mod}`);
   });
-  BUTTON_MODIFIERS.forEach((name) => {
-    a.classList.remove(name, `button--${name}`);
-  });
+  if (!modifiers.includes('new-tab')) {
+    a.removeAttribute('target');
+    a.removeAttribute('rel');
+  }
+  if (!modifiers.includes('disabled')) {
+    delete a.dataset.buttonDisabled;
+    a.removeAttribute('aria-disabled');
+    a.removeAttribute('tabindex');
+  }
 
-  if (variant) a.classList.add(variant, `button--${variant}`);
+  if (variant) {
+    BUTTON_VARIANTS.forEach((v) => a.classList.remove(v, `button--${v}`));
+    a.classList.add(variant, `button--${variant}`);
+  }
   modifiers.forEach((mod) => {
     a.classList.add(mod, `button--${mod}`);
   });
@@ -370,6 +655,7 @@ export function decorateButtons(main) {
     const p = a.closest('p');
     if (!p) return;
 
+    // Published / UE buttons already have .button; still map Options classes.
     if (a.classList.contains('button')) {
       applyButtonChrome(a, p);
       return;
@@ -387,6 +673,7 @@ export function decorateButtons(main) {
     const icons = [...a.querySelectorAll(':scope > .icon, :scope .icon')];
     const variant = getButtonVariant(a, strong, em);
 
+    // Icon-only links still become buttons; plain text links stay default links
     if (!variant && !icons.length) return;
     const resolvedVariant = variant || 'primary';
 
@@ -396,8 +683,8 @@ export function decorateButtons(main) {
 
     const modifiers = getButtonModifiers(a, p);
 
-    p.className = 'button-wrapper';
-    a.className = 'button';
+    p.classList.add('button-wrapper');
+    a.classList.add('button');
     applyButtonChrome(a, p, {
       variant: resolvedVariant,
       modifiers,
@@ -412,6 +699,27 @@ export function decorateButtons(main) {
       em.replaceWith(a);
     }
   });
+}
+
+/**
+ * Applies a live UE patch to the in-canvas button and redecorates nearby content.
+ * @param {CustomEvent} event
+ * @returns {boolean}
+ */
+export function applyButtonLivePatch(event) {
+  const patch = getButtonPatchFromEvent(event?.detail);
+  if (!patch?.name || !BUTTON_PATCH_PROPS.has(patch.name)) return false;
+
+  const resource = event.detail?.request?.target?.resource;
+  if (!resource) return false;
+
+  const element = document.querySelector(`[data-aue-resource="${resource}"]`);
+  if (!element) return false;
+
+  applyButtonPatchFromUe(element, patch);
+  const scope = element.closest('.section') || element.closest('main') || element.parentElement;
+  if (scope) decorateButtons(scope);
+  return true;
 }
 
 /**

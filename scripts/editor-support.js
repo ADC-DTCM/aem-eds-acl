@@ -8,9 +8,22 @@ import {
   loadSections,
 } from './aem.js';
 import { decorateRichtext } from './editor-support-rte.js';
-import { decorateButtons, decorateMain } from './scripts.js';
+import {
+  decorateMain,
+  decorateButtons,
+  applyButtonPatchFromUe,
+  applyButtonLivePatch,
+  getButtonPatchFromEvent,
+} from './scripts.js';
 
 let promiseChanges$ = Promise.resolve();
+
+function applyPatchAfterDecorate(scope, event) {
+  const patch = getButtonPatchFromEvent(event?.detail);
+  if (!patch?.name || !scope) return;
+  applyButtonPatchFromUe(scope, patch);
+  decorateButtons(scope.closest('.section') || scope.closest('main') || scope);
+}
 
 async function applyChanges(event) {
   await promiseChanges$;
@@ -23,7 +36,7 @@ async function applyChanges(event) {
     || detail?.request?.to?.container?.resource; // move in sections
   if (!resource) return false;
   const updates = detail?.response?.updates;
-  if (!updates.length) return false;
+  if (!updates?.length) return false;
   const { content } = updates[0];
   if (!content) return false;
 
@@ -45,6 +58,7 @@ async function applyChanges(event) {
       await loadSections(newMain);
       element.remove();
       newMain.style.display = null;
+      applyPatchAfterDecorate(newMain, event);
       // eslint-disable-next-line no-use-before-define
       attachEventListeners(newMain);
       return true;
@@ -57,6 +71,7 @@ async function applyChanges(event) {
       if (newBlock) {
         newBlock.style.display = 'none';
         block.insertAdjacentElement('afterend', newBlock);
+        applyButtonPatchFromUe(newBlock, getButtonPatchFromEvent(detail));
         decorateButtons(newBlock);
         decorateIcons(newBlock);
         decorateBlock(newBlock);
@@ -64,6 +79,7 @@ async function applyChanges(event) {
         await loadBlock(newBlock);
         block.remove();
         newBlock.style.display = null;
+        applyPatchAfterDecorate(newBlock, event);
         return true;
       }
     } else {
@@ -83,11 +99,14 @@ async function applyChanges(event) {
           await loadSections(parentElement);
           element.remove();
           newSection.style.display = null;
+          applyPatchAfterDecorate(newSection, event);
         } else {
           element.replaceWith(...newElements);
+          newElements.forEach((el) => applyButtonPatchFromUe(el, getButtonPatchFromEvent(detail)));
           decorateButtons(parentElement);
           decorateIcons(parentElement);
           decorateRichtext(parentElement);
+          applyPatchAfterDecorate(parentElement, event);
         }
         return true;
       }
@@ -107,9 +126,14 @@ function attachEventListeners(main) {
     'aue:content-copy',
   ].forEach((eventType) => main?.addEventListener(eventType, async (event) => {
     event.stopPropagation();
+    applyButtonLivePatch(event);
     promiseChanges$ = applyChanges(event);
     const applied = await promiseChanges$;
-    if (!applied) window.location.reload();
+    if (applied) {
+      applyButtonLivePatch(event);
+    } else if (!applyButtonLivePatch(event)) {
+      window.location.reload();
+    }
   }));
 }
 
@@ -120,14 +144,14 @@ const buttonPropObserver = new MutationObserver((mutations) => {
   if (!main) return;
   const shouldDecorate = mutations.some(({ target, attributeName }) => (
     attributeName?.startsWith('data-aue-prop-')
-    && (attributeName.includes('classes') || attributeName.includes('linktype'))
-    && (target.matches('[data-aue-model="button"], [data-aue-prop-classes], [data-aue-prop-linktype]')
+    && (attributeName.includes('classes') || attributeName.includes('link'))
+    && (target.matches('[data-aue-model="button"], [data-aue-prop-classes], [data-aue-prop-linktype], [data-aue-prop-link-type]')
       || target.closest('[data-aue-model="button"]'))
   ));
   if (shouldDecorate) decorateButtons(main);
 });
 buttonPropObserver.observe(document, {
-  attributeFilter: ['data-aue-prop-classes', 'data-aue-prop-linktype'],
+  attributeFilter: ['data-aue-prop-classes', 'data-aue-prop-linktype', 'data-aue-prop-link-type'],
   subtree: true,
 });
 
