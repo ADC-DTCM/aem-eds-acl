@@ -14,6 +14,7 @@ import {
   applyButtonPatchFromUe,
   applyButtonLivePatch,
   getButtonPatchFromEvent,
+  mergeButtonUeState,
 } from './scripts.js';
 
 let promiseChanges$ = Promise.resolve();
@@ -102,7 +103,10 @@ async function applyChanges(event) {
           applyPatchAfterDecorate(event);
         } else {
           element.replaceWith(...newElements);
-          newElements.forEach((el) => applyButtonPatchFromUe(el, getButtonPatchFromEvent(detail)));
+          newElements.forEach((el) => {
+            mergeButtonUeState(element, el);
+            applyButtonPatchFromUe(el, getButtonPatchFromEvent(detail));
+          });
           decorateButtons(parentElement);
           decorateIcons(parentElement);
           decorateRichtext(parentElement);

@@ -427,7 +427,51 @@ export function applyButtonPatchFromUe(root, patch) {
       anchor?.setAttribute(`data-aue-prop-${prop}`, value);
     }
     syncAnchorFromPatch(anchor, patch.name, patch.value);
+    // Other fields (e.g. disabled) must not drop Shape already stored on this button.
+    if (patch.name !== 'classes') {
+      const classes = readUeProp(button, 'classes') || readUeProp(anchor, 'classes');
+      if (classes) syncAnchorFromPatch(anchor, 'classes', classes);
+    }
   });
+}
+
+/**
+ * Copies button UE props from a replaced node so Shape/Variation survive partial patches.
+ * @param {Element} from
+ * @param {Element} to
+ */
+export function mergeButtonUeState(from, to) {
+  if (!from?.attributes || !to?.attributes) return;
+
+  const fromContainer = findButtonContainers(from)[0] || from;
+  const toContainer = findButtonContainers(to)[0] || to;
+  if (!fromContainer || !toContainer) return;
+
+  const copyProps = (source, target) => {
+    [...source.attributes].forEach(({ name, value }) => {
+      if (name.startsWith('data-aue-prop-') && !target.hasAttribute(name)) {
+        target.setAttribute(name, value);
+      }
+    });
+  };
+
+  copyProps(fromContainer, toContainer);
+  copyProps(from, toContainer);
+
+  const fromAnchor = fromContainer.querySelector?.('a[href]')
+    || (fromContainer.matches?.('a[href]') ? fromContainer : null);
+  const toAnchor = toContainer.querySelector?.('a[href]')
+    || (toContainer.matches?.('a[href]') ? toContainer : null);
+
+  if (fromAnchor && toAnchor) {
+    copyProps(fromAnchor, toAnchor);
+    const classes = readUeProp(toContainer, 'classes')
+      || readUeProp(fromContainer, 'classes')
+      || readUeProp(fromAnchor, 'classes');
+    if (classes?.includes('round') && !toAnchor.classList.contains('round')) {
+      toAnchor.classList.add('round');
+    }
+  }
 }
 
 /**
