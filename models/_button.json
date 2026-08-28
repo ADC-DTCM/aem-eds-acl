@@ -22,7 +22,12 @@
         {
           "component": "aem-content",
           "name": "link",
-          "label": "Link"
+          "label": "Link",
+          "valueType": "string",
+          "description": "Select a page from this site.",
+          "validation": {
+            "rootPath": "/content/aem-eds-acl"
+          }
         },
         {
           "component": "text",
