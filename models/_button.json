@@ -124,25 +124,36 @@
           }
         },
         {
-          "component": "multiselect",
-          "name": "classes",
-          "label": "Options",
+          "component": "select",
+          "name": "classes_shape",
+          "label": "Shape",
           "valueType": "string",
-          "description": "Shape defaults to Default (8px). Rounded is the pill shape.",
+          "value": "",
+          "description": "Default is 8px corners. Rounded is the pill shape.",
           "options": [
+            {
+              "name": "Default",
+              "value": ""
+            },
             {
               "name": "Rounded",
               "value": "round"
-            },
-            {
-              "name": "Open in new tab",
-              "value": "new-tab"
-            },
-            {
-              "name": "Disabled",
-              "value": "disabled"
             }
           ]
+        },
+        {
+          "component": "boolean",
+          "name": "classes_disabled",
+          "label": "Disabled",
+          "valueType": "boolean",
+          "value": false
+        },
+        {
+          "component": "boolean",
+          "name": "classes_new-tab",
+          "label": "Open in new tab",
+          "valueType": "boolean",
+          "value": false
         }
       ]
     }

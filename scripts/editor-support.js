@@ -152,6 +152,12 @@ const BUTTON_UE_ATTRS = [
   'data-aue-prop-link-type',
   'data-aue-prop-linkType',
   'data-aue-prop-classes',
+  'data-aue-prop-classes-shape',
+  'data-aue-prop-classes_shape',
+  'data-aue-prop-classes-disabled',
+  'data-aue-prop-classes_disabled',
+  'data-aue-prop-classes-new-tab',
+  'data-aue-prop-classes_new-tab',
   'data-aue-prop-disabled',
   'data-aue-prop-open-in-new-tab',
 ];

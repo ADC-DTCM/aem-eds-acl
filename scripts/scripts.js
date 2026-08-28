@@ -223,7 +223,14 @@ const UE_PROP_ALIASES = {
 
 function toUePropAttr(name) {
   if (UE_PROP_ALIASES[name]) return UE_PROP_ALIASES[name];
-  return name.replace(/([A-Z])/g, '-$1').toLowerCase();
+  return String(name).replace(/_/g, '-').replace(/([A-Z])/g, '-$1').toLowerCase();
+}
+
+function uePropVariants(prop) {
+  const base = String(prop);
+  const hyphen = base.replace(/_/g, '-');
+  const underscore = base.replace(/-/g, '_');
+  return [...new Set([base, hyphen, underscore])];
 }
 
 /**
@@ -234,26 +241,34 @@ function toUePropAttr(name) {
  */
 function readUeProp(el, prop) {
   if (!el) return null;
-  const names = prop === 'linktype' ? ['linktype', 'link-type', 'linkType'] : [prop];
-  for (let i = 0; i < names.length; i += 1) {
-    const attr = el.getAttribute(`data-aue-prop-${names[i]}`);
+
+  for (let i = 0; i < uePropVariants(prop).length; i += 1) {
+    const name = uePropVariants(prop)[i];
+    const attr = el.getAttribute(`data-aue-prop-${name}`);
     if (attr != null && attr !== '') return attr;
   }
+
   if (prop === 'linktype') {
     const match = [...el.attributes].find(({ name, value }) => (
       name.startsWith('data-aue-prop-') && /link.?type/i.test(name.slice('data-aue-prop-'.length)) && value
     ));
     if (match) return match.value;
   }
+
   if (prop === 'classes') {
     const match = [...el.attributes].find(({ name, value }) => (
-      name.startsWith('data-aue-prop-') && name.includes('classes') && value
+      name.startsWith('data-aue-prop-') && name.endsWith('classes') && value
     ));
     if (match) return match.value;
   }
-  const camel = prop.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
-  const fromDataset = el.dataset?.[camel];
-  return fromDataset != null && fromDataset !== '' ? fromDataset : null;
+
+  for (let i = 0; i < uePropVariants(prop).length; i += 1) {
+    const camel = uePropVariants(prop)[i].replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+    const fromDataset = el.dataset?.[camel];
+    if (fromDataset != null && fromDataset !== '') return fromDataset;
+  }
+
+  return null;
 }
 
 function isUeButtonComponent(a) {
@@ -336,6 +351,10 @@ export const BUTTON_PATCH_PROPS = new Set([
   'classes',
   'classes_shape',
   'classes-shape',
+  'classes_disabled',
+  'classes-disabled',
+  'classes_new-tab',
+  'classes-new-tab',
   'linkType',
   'disabled',
   'openInNewTab',
@@ -399,36 +418,92 @@ function serializePatchValue(raw) {
  * @param {string} prop
  * @param {unknown} rawValue
  */
+/**
+ * Reads round/disabled/new-tab from UE props on the button container and anchor.
+ * @param {HTMLAnchorElement} anchor
+ * @returns {Set<string>}
+ */
+function getModifierStateFromProps(anchor) {
+  const container = anchor?.closest?.('[data-aue-model="button"]') || anchor?.closest?.('p');
+  const found = new Set();
+  [container, anchor].filter(Boolean).forEach((el) => {
+    ingestModifierValue(readUeProp(el, 'classes'), found);
+    if (readUeProp(el, 'classes_shape') === 'round') found.add('round');
+    if (readUeProp(el, 'classes-disabled') === 'true' || readUeProp(el, 'classes_disabled') === 'true') {
+      found.add('disabled');
+    }
+    if (readUeProp(el, 'classes-new-tab') === 'true' || readUeProp(el, 'classes_new-tab') === 'true') {
+      found.add('new-tab');
+    }
+    if (readUeProp(el, 'disabled') === 'true') found.add('disabled');
+    if (readUeProp(el, 'open-in-new-tab') === 'true' || readUeProp(el, 'openInNewTab') === 'true') {
+      found.add('new-tab');
+    }
+  });
+  return found;
+}
+
+function applyModifierSet(anchor, found) {
+  ['round', 'disabled', 'new-tab'].forEach((mod) => {
+    if (found.has(mod)) anchor.classList.add(mod, `button--${mod}`);
+    else anchor.classList.remove(mod, `button--${mod}`);
+  });
+  if (found.has('disabled')) {
+    if (anchor.dataset.buttonDisabled !== 'true') {
+      anchor.dataset.buttonDisabled = 'true';
+      anchor.setAttribute('aria-disabled', 'true');
+      anchor.setAttribute('tabindex', '-1');
+      anchor.addEventListener('click', (event) => event.preventDefault());
+    }
+  } else {
+    delete anchor.dataset.buttonDisabled;
+    anchor.removeAttribute('aria-disabled');
+    anchor.removeAttribute('tabindex');
+  }
+  if (found.has('new-tab')) {
+    anchor.target = '_blank';
+    anchor.rel = 'noopener noreferrer';
+  } else if (!anchor.classList.contains('new-tab')) {
+    anchor.removeAttribute('target');
+    anchor.removeAttribute('rel');
+  }
+}
+
 function syncAnchorFromPatch(anchor, prop, rawValue) {
   if (!anchor) return;
   const kebab = toUePropAttr(prop);
 
-  if (kebab === 'classes' || kebab.startsWith('classes-')) {
+  if (kebab === 'classes-shape' || kebab === 'classes_shape') {
+    const found = getModifierStateFromProps(anchor);
+    if (String(rawValue || '').trim() === 'round') found.add('round');
+    else found.delete('round');
+    applyModifierSet(anchor, found);
+    return;
+  }
+
+  if (kebab === 'classes-disabled' || kebab === 'classes_disabled') {
+    const found = getModifierStateFromProps(anchor);
+    const on = rawValue === true || rawValue === 'true';
+    if (on) found.add('disabled');
+    else found.delete('disabled');
+    applyModifierSet(anchor, found);
+    return;
+  }
+
+  if (kebab === 'classes-new-tab' || kebab === 'classes_new-tab') {
+    const found = getModifierStateFromProps(anchor);
+    const on = rawValue === true || rawValue === 'true';
+    if (on) found.add('new-tab');
+    else found.delete('new-tab');
+    applyModifierSet(anchor, found);
+    return;
+  }
+
+  if (kebab === 'classes') {
     const found = new Set();
     ingestModifierValue(rawValue, found);
-    ['round', 'disabled', 'new-tab'].forEach((mod) => {
-      if (found.has(mod)) anchor.classList.add(mod, `button--${mod}`);
-      else anchor.classList.remove(mod, `button--${mod}`);
-    });
-    if (found.has('disabled')) {
-      if (anchor.dataset.buttonDisabled !== 'true') {
-        anchor.dataset.buttonDisabled = 'true';
-        anchor.setAttribute('aria-disabled', 'true');
-        anchor.setAttribute('tabindex', '-1');
-        anchor.addEventListener('click', (event) => event.preventDefault());
-      }
-    } else {
-      delete anchor.dataset.buttonDisabled;
-      anchor.removeAttribute('aria-disabled');
-      anchor.removeAttribute('tabindex');
-    }
-    if (found.has('new-tab')) {
-      anchor.target = '_blank';
-      anchor.rel = 'noopener noreferrer';
-    } else if (!anchor.classList.contains('new-tab')) {
-      anchor.removeAttribute('target');
-      anchor.removeAttribute('rel');
-    }
+    applyModifierSet(anchor, found);
+    return;
   }
 
   if (kebab === 'linktype') {
@@ -501,14 +576,18 @@ export function applyButtonPatchFromUe(root, patch) {
     syncAnchorFromPatch(anchor, patch.name, isEmpty && patch.name === 'classes' ? '' : patchValue);
 
     // Partial UE patches must not drop other stored button props.
-    if (patch.name !== 'classes') {
-      const classes = readUeProp(button, 'classes') || readUeProp(anchor, 'classes');
-      if (classes) syncAnchorFromPatch(anchor, 'classes', classes);
-    }
-    if (patch.name !== 'linkType') {
-      const linkType = readUeProp(button, 'linktype') || readUeProp(anchor, 'linktype');
-      if (linkType) syncAnchorFromPatch(anchor, 'linkType', linkType);
-    }
+    const preserveProps = [
+      ['classes', 'classes'],
+      ['classes_shape', 'classes_shape'],
+      ['classes_disabled', 'classes_disabled'],
+      ['classes_new-tab', 'classes_new-tab'],
+      ['linkType', 'linktype'],
+    ];
+    preserveProps.forEach(([patchName, readName]) => {
+      if (patch.name === patchName || toUePropAttr(patch.name) === toUePropAttr(patchName)) return;
+      const stored = readUeProp(button, readName) || readUeProp(anchor, readName);
+      if (stored != null && stored !== '') syncAnchorFromPatch(anchor, patchName, stored);
+    });
   });
 }
 
@@ -523,8 +602,17 @@ function applyStoredButtonProps(container, anchor) {
   const linkType = readUeProp(container, 'linktype') || readUeProp(anchor, 'linktype');
   syncAnchorFromPatch(anchor, 'linkType', linkType || '');
 
+  const shape = readUeProp(container, 'classes_shape') || readUeProp(anchor, 'classes_shape');
+  syncAnchorFromPatch(anchor, 'classes_shape', shape || '');
+
+  const disabled = readUeProp(container, 'classes_disabled') || readUeProp(anchor, 'classes_disabled');
+  if (disabled != null) syncAnchorFromPatch(anchor, 'classes_disabled', disabled);
+
+  const newTab = readUeProp(container, 'classes_new-tab') || readUeProp(anchor, 'classes_new-tab');
+  if (newTab != null) syncAnchorFromPatch(anchor, 'classes_new-tab', newTab);
+
   const classes = readUeProp(container, 'classes') || readUeProp(anchor, 'classes');
-  syncAnchorFromPatch(anchor, 'classes', classes || '');
+  if (classes) syncAnchorFromPatch(anchor, 'classes', classes);
 
   container.classList.add('button-wrapper');
   anchor.classList.add('button');
@@ -656,10 +744,16 @@ function getButtonModifiers(a, p) {
   const container = a.closest('[data-aue-model="button"]');
   const hasClassesProp = container?.hasAttribute('data-aue-prop-classes')
     || a.hasAttribute('data-aue-prop-classes')
-    || p?.hasAttribute('data-aue-prop-classes');
+    || p?.hasAttribute('data-aue-prop-classes')
+    || container?.hasAttribute('data-aue-prop-classes-shape')
+    || container?.hasAttribute('data-aue-prop-classes_shape')
+    || container?.hasAttribute('data-aue-prop-classes-disabled')
+    || container?.hasAttribute('data-aue-prop-classes_disabled')
+    || container?.hasAttribute('data-aue-prop-classes-new-tab')
+    || container?.hasAttribute('data-aue-prop-classes_new-tab');
   if (container && hasClassesProp) {
     const found = new Set();
-    ingestModifierValue(readUeProp(container, 'classes') || readUeProp(a, 'classes') || readUeProp(p, 'classes'), found);
+    [container, a, p].forEach((el) => collectButtonModifiers(el, found));
     return BUTTON_MODIFIERS.filter((mod) => found.has(mod));
   }
 
@@ -701,7 +795,10 @@ function primeButtonProps(main) {
   });
 
   main.querySelectorAll(
-    '[data-aue-prop-linktype], [data-aue-prop-link-type], [data-aue-prop-linkType], [data-aue-prop-classes]',
+    '[data-aue-prop-linktype], [data-aue-prop-link-type], [data-aue-prop-linkType],'
+    + ' [data-aue-prop-classes], [data-aue-prop-classes-shape], [data-aue-prop-classes_shape],'
+    + ' [data-aue-prop-classes-disabled], [data-aue-prop-classes_disabled],'
+    + ' [data-aue-prop-classes-new-tab], [data-aue-prop-classes_new-tab]',
   ).forEach((el) => {
     findButtonContainers(el).forEach((container) => {
       const anchor = container.querySelector('a[href]') || (el.matches('a[href]') ? el : null);
