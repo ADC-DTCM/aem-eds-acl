@@ -115,6 +115,22 @@ function attachEventListeners(main) {
 
 attachEventListeners(document.querySelector('main'));
 
+const buttonPropObserver = new MutationObserver((mutations) => {
+  const main = document.querySelector('main');
+  if (!main) return;
+  const shouldDecorate = mutations.some(({ target, attributeName }) => (
+    attributeName?.startsWith('data-aue-prop-')
+    && (attributeName.includes('classes') || attributeName.includes('linktype'))
+    && (target.matches('[data-aue-model="button"], [data-aue-prop-classes], [data-aue-prop-linktype]')
+      || target.closest('[data-aue-model="button"]'))
+  ));
+  if (shouldDecorate) decorateButtons(main);
+});
+buttonPropObserver.observe(document, {
+  attributeFilter: ['data-aue-prop-classes', 'data-aue-prop-linktype'],
+  subtree: true,
+});
+
 // decorate rich text
 // this has to happen after decorateMain(), and everythime decorateBlocks() is called
 decorateRichtext();

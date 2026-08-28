@@ -90,7 +90,61 @@ const BUTTON_MODIFIERS = [
 
 const RESERVED_ICON_CLASSES = new Set(['icon-left', 'icon-right', 'icon-only']);
 
-const MODIFIER_TEXT = new Set(['round', 'rounded', 'disabled', 'new-tab']);
+/**
+ * @param {Element|null|undefined} el
+ * @param {string} prop
+ * @returns {string|null}
+ */
+function readUeProp(el, prop) {
+  if (!el) return null;
+  const value = el.getAttribute(`data-aue-prop-${prop}`);
+  return value == null || value === '' ? null : value;
+}
+
+/**
+ * @param {Element} el
+ * @returns {Element|null}
+ */
+function findButtonContainer(el) {
+  return el.closest('[data-aue-model="button"]');
+}
+
+/**
+ * @param {string} raw
+ * @param {Set<string>} mods
+ */
+function ingestModifierTokens(raw, mods) {
+  String(raw).split(/[\s,]+/).forEach((token) => {
+    const normalized = token.trim().toLowerCase();
+    if (!normalized) return;
+    const mod = normalized === 'rounded' ? 'round' : normalized;
+    if (BUTTON_MODIFIERS.includes(mod)) mods.add(mod);
+  });
+}
+
+/**
+ * Syncs persisted UE props onto anchors before decoration (author reload / patch).
+ * @param {HTMLElement} main
+ */
+function primeButtonProps(main) {
+  main.querySelectorAll('[data-aue-model="button"]').forEach((container) => {
+    const anchor = container.querySelector('a[href]');
+    if (!anchor) return;
+
+    const linkType = readUeProp(container, 'linktype') || readUeProp(anchor, 'linktype');
+    if (linkType && BUTTON_VARIANTS.includes(linkType)) {
+      anchor.classList.add(linkType);
+    }
+
+    [container, anchor].forEach((el) => {
+      const classes = readUeProp(el, 'classes');
+      if (!classes) return;
+      const mods = new Set();
+      ingestModifierTokens(classes, mods);
+      mods.forEach((mod) => anchor.classList.add(mod));
+    });
+  });
+}
 
 /**
  * Turns `:iconname:` tokens in a button into `span.icon` (DA and UE text).
@@ -186,10 +240,20 @@ function getButtonVariant(a, strong, em) {
     a.classList.contains(variant) || a.classList.contains(`button--${variant}`)
   ));
   if (fromClass) return fromClass;
+
+  const container = findButtonContainer(a);
+  const linkTypeAttr = readUeProp(a, 'linktype')
+    || readUeProp(container, 'linktype')
+    || a.getAttribute('data-linktype')
+    || a.dataset?.linkType;
+  if (linkTypeAttr && BUTTON_VARIANTS.includes(linkTypeAttr)) return linkTypeAttr;
+
   if (a.classList.contains('accent')) return 'primary';
   if (strong && em) return 'primary';
   if (strong) return 'primary';
   if (em) return 'secondary';
+  // UE may publish Options without the variation class (e.g. class="button round").
+  if (a.classList.contains('button')) return 'primary';
   return null;
 }
 
@@ -200,23 +264,32 @@ function getButtonVariant(a, strong, em) {
  * @returns {string[]}
  */
 function getButtonModifiers(a, p) {
-  const mods = BUTTON_MODIFIERS.filter((mod) => (
+  const mods = new Set(BUTTON_MODIFIERS.filter((mod) => (
     a.classList.contains(mod)
     || a.classList.contains(`button--${mod}`)
     || p.classList.contains(mod)
     || p.classList.contains(`button--${mod}`)
-  ));
+  )));
+
+  const container = findButtonContainer(a);
+  [a, p, container].forEach((el) => {
+    ingestModifierTokens(readUeProp(el, 'classes'), mods);
+  });
 
   [...p.childNodes].forEach((node) => {
     if (node.nodeType !== Node.TEXT_NODE) return;
-    const text = node.textContent.trim().toLowerCase();
-    if (!MODIFIER_TEXT.has(text)) return;
-    const mod = text === 'rounded' ? 'round' : text;
-    if (!mods.includes(mod)) mods.push(mod);
-    node.textContent = '';
+    const before = node.textContent;
+    const sizeBefore = mods.size;
+    ingestModifierTokens(before, mods);
+    if (mods.size > sizeBefore || !before.trim()) {
+      node.textContent = '';
+    }
   });
 
-  return mods;
+  if (a.getAttribute('aria-disabled') === 'true') mods.add('disabled');
+  if (a.target === '_blank' && a.rel?.includes('noopener')) mods.add('new-tab');
+
+  return [...mods];
 }
 
 /**
@@ -228,7 +301,9 @@ function getButtonModifiers(a, p) {
  * @param {string[]} [precomputed.modifiers]
  */
 function applyButtonChrome(a, p, precomputed = {}) {
-  const variant = precomputed.variant ?? getButtonVariant(a, null, null);
+  const variant = precomputed.variant
+    ?? getButtonVariant(a, null, null)
+    ?? (a.classList.contains('button') ? 'primary' : null);
   const modifiers = precomputed.modifiers ?? getButtonModifiers(a, p);
 
   BUTTON_VARIANTS.forEach((name) => {
@@ -289,6 +364,8 @@ function applyButtonChrome(a, p, precomputed = {}) {
  * @param {HTMLElement} main The main container element
  */
 export function decorateButtons(main) {
+  primeButtonProps(main);
+
   main.querySelectorAll('p a[href]').forEach((a) => {
     const p = a.closest('p');
     if (!p) return;
