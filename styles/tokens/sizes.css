@@ -1,0 +1,33 @@
+/*
+ * DOC design tokens — sizes
+ * Figma Button Size: Small, Default, Large, Extra-Large.
+ * Live values are assigned by breakpoint in buttons.css.
+ */
+
+:root {
+  --button-max-width: 100%;
+  --button-small-min-height: 32px;
+  --button-small-gap: var(--space-6);
+  --button-small-padding-block: var(--space-6);
+  --button-small-padding-inline: var(--space-sm);
+  --button-small-icon-size: 16px;
+  --button-small-icon-only-padding: var(--space-xs);
+  --button-default-min-height: 36px;
+  --button-default-gap: var(--space-xs);
+  --button-default-padding-block: var(--space-sm);
+  --button-default-padding-inline: var(--space-md);
+  --button-default-icon-size: 18px;
+  --button-default-icon-only-padding: 14px;
+  --button-large-min-height: 52px;
+  --button-large-gap: 13px;
+  --button-large-padding-block: 14px;
+  --button-large-padding-inline: 32px;
+  --button-large-icon-size: 20px;
+  --button-large-icon-only-padding: 16px;
+  --button-xl-min-height: 64px;
+  --button-xl-gap: 15px;
+  --button-xl-padding-block: var(--space-sm);
+  --button-xl-padding-inline: 40px;
+  --button-xl-icon-size: 24px;
+  --button-xl-icon-only-padding: 20px;
+}

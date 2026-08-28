@@ -92,36 +92,122 @@
     "id": "button",
     "fields": [
       {
+        "component": "select",
+        "name": "linkType",
+        "label": "Variation",
+        "valueType": "string",
+        "value": "primary",
+        "description": "Default is Primary. Link is a text link (no button chrome, no icon).",
+        "options": [
+          {
+            "name": "Primary",
+            "value": "primary"
+          },
+          {
+            "name": "Secondary",
+            "value": "secondary"
+          },
+          {
+            "name": "Outline",
+            "value": "outline"
+          },
+          {
+            "name": "Ghost",
+            "value": "ghost"
+          },
+          {
+            "name": "Ghost Inverted",
+            "value": "ghost-inverted"
+          },
+          {
+            "name": "Destructive",
+            "value": "destructive"
+          },
+          {
+            "name": "Link",
+            "value": "link"
+          }
+        ]
+      },
+      {
         "component": "aem-content",
         "name": "link",
-        "label": "Link"
+        "label": "Link",
+        "valueType": "string"
       },
       {
         "component": "text",
         "name": "linkText",
-        "label": "Text"
+        "label": "Text",
+        "valueType": "string",
+        "description": "Optional. Leave empty for an icon-only button."
       },
       {
         "component": "text",
         "name": "linkTitle",
-        "label": "Title"
+        "label": "Title",
+        "valueType": "string",
+        "description": "Accessible name. Required for icon-only buttons."
+      },
+      {
+        "component": "text",
+        "name": "icon",
+        "label": "Icon",
+        "valueType": "string",
+        "description": "Icon name from /icons (without .svg), e.g. search. Visual picker is MODP-66.",
+        "condition": {
+          "!=": [
+            {
+              "var": "linkType"
+            },
+            "link"
+          ]
+        }
       },
       {
         "component": "select",
-        "name": "linkType",
-        "label": "Type",
+        "name": "iconPosition",
+        "label": "Icon Position",
+        "valueType": "string",
+        "value": "icon-left",
+        "description": "Default is Left. Not used for the Link variation.",
         "options": [
           {
-            "name": "primary",
-            "value": "primary"
+            "name": "Left",
+            "value": "icon-left"
           },
           {
-            "name": "secondary",
-            "value": "secondary"
+            "name": "Right",
+            "value": "icon-right"
+          }
+        ],
+        "condition": {
+          "!=": [
+            {
+              "var": "linkType"
+            },
+            "link"
+          ]
+        }
+      },
+      {
+        "component": "multiselect",
+        "name": "classes",
+        "label": "Options",
+        "valueType": "string",
+        "description": "Shape defaults to Default (8px). Rounded is the pill shape. Size follows the viewport (Small / Default / Large / Extra-Large).",
+        "options": [
+          {
+            "name": "Rounded",
+            "value": "round"
           },
           {
-            "name": "Black",
-            "value": "black"
+            "name": "Open in new tab",
+            "value": "new-tab"
+          },
+          {
+            "name": "Disabled",
+            "value": "disabled"
           }
         ]
       }

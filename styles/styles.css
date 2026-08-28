@@ -16,8 +16,8 @@
   --light-color: #f5f4f2;
   --dark-color: #505050;
   --text-color: #384246;
-  --link-color: #3b63fb;
-  --link-hover-color: #1d3ecf;
+  --link-color: var(--doc-color-semantic-link-default);
+  --link-hover-color: var(--doc-color-semantic-link-hover);
   --primary-color: #194036;
   --secondary-color: #ffc51d;
   --black: #1d1c1a;
@@ -40,6 +40,134 @@
 
   /* nav height */
   --nav-height: 64px;
+
+  /* DoC design tokens (MODP-64 button system) */
+
+  /* primitive colours */
+  --doc-color-primitive-forest-50: #f2f7f5;
+  --doc-color-primitive-forest-100: #e0edea;
+  --doc-color-primitive-forest-200: #c2dcd5;
+  --doc-color-primitive-forest-300: #98c4b8;
+  --doc-color-primitive-forest-400: #6ba593;
+  --doc-color-primitive-forest-500: #4a8872;
+  --doc-color-primitive-forest-600: #366b58;
+  --doc-color-primitive-forest-700: #235445;
+  --doc-color-primitive-forest-800: #194036;
+  --doc-color-primitive-forest-900: #133029;
+  --doc-color-primitive-leaf-50: #f4f9f0;
+  --doc-color-primitive-leaf-100: #e5f2dc;
+  --doc-color-primitive-leaf-200: #cce5b9;
+  --doc-color-primitive-leaf-300: #aad18f;
+  --doc-color-primitive-leaf-400: #85b862;
+  --doc-color-primitive-leaf-500: #507f39;
+  --doc-color-primitive-leaf-600: #3f662d;
+  --doc-color-primitive-leaf-700: #2f4d22;
+  --doc-color-primitive-leaf-800: #1f3517;
+  --doc-color-primitive-leaf-900: #12200d;
+  --doc-color-primitive-neutral-50: #fafaf9;
+  --doc-color-primitive-neutral-100: #f5f5f4;
+  --doc-color-primitive-neutral-200: #e7e5e4;
+  --doc-color-primitive-neutral-300: #d6d3d1;
+  --doc-color-primitive-neutral-400: #a8a29e;
+  --doc-color-primitive-neutral-500: #78716c;
+  --doc-color-primitive-neutral-600: #57534e;
+  --doc-color-primitive-neutral-700: #44403c;
+  --doc-color-primitive-neutral-800: #292524;
+  --doc-color-primitive-neutral-900: #1c1917;
+  --doc-color-primitive-sky-50: #f0f7fc;
+  --doc-color-primitive-sky-100: #dbeef9;
+  --doc-color-primitive-sky-200: #b3dbf2;
+  --doc-color-primitive-sky-300: #7fc2e8;
+  --doc-color-primitive-sky-400: #47a3d9;
+  --doc-color-primitive-sky-500: #1a87c4;
+  --doc-color-primitive-sky-600: #0066a4;
+  --doc-color-primitive-sky-700: #004b7a;
+  --doc-color-primitive-sky-800: #003657;
+  --doc-color-primitive-sky-900: #002438;
+  --doc-color-primitive-sun-25: #faf9f4;
+  --doc-color-primitive-sun-50: #fffbeb;
+  --doc-color-primitive-sun-100: #fff5c6;
+  --doc-color-primitive-sun-200: #ffea88;
+  --doc-color-primitive-sun-300: #ffdc4a;
+  --doc-color-primitive-sun-400: #ffd024;
+  --doc-color-primitive-sun-500: #ffc51d;
+  --doc-color-primitive-sun-600: #e0a800;
+  --doc-color-primitive-sun-700: #b88600;
+  --doc-color-primitive-sun-800: #966900;
+  --doc-color-primitive-sun-900: #7a5100;
+  --doc-color-primitive-berry-50: #fef2f4;
+  --doc-color-primitive-berry-100: #fce4e8;
+  --doc-color-primitive-berry-200: #f9bfc8;
+  --doc-color-primitive-berry-300: #f599a8;
+  --doc-color-primitive-berry-400: #eb596f;
+  --doc-color-primitive-berry-500: #e11836;
+  --doc-color-primitive-berry-600: #b4132b;
+  --doc-color-primitive-berry-700: #9e0d23;
+  --doc-color-primitive-berry-800: #780a1b;
+  --doc-color-primitive-berry-900: #520714;
+  --doc-color-primitive-base-white: #fcfbf8;
+  --doc-color-primitive-black-opacity-24: rgb(0 0 0 / 24%);
+  --doc-color-primitive-black-opacity-32: rgb(0 0 0 / 32%);
+  --doc-color-primitive-black-opacity-40: rgb(0 0 0 / 40%);
+  --doc-color-primitive-black-opacity-64: rgb(0 0 0 / 64%);
+  --doc-color-primitive-black-opacity-80: rgb(0 0 0 / 80%);
+  --doc-color-primitive-white-opacity-24: rgb(255 255 255 / 24%);
+  --doc-color-primitive-white-opacity-32: rgb(255 255 255 / 32%);
+  --doc-color-primitive-white-opacity-40: rgb(255 255 255 / 40%);
+  --doc-color-primitive-white-opacity-64: rgb(255 255 255 / 64%);
+  --doc-color-primitive-white-opacity-80: rgb(255 255 255 / 80%);
+  --doc-color-primitive-white-opacity-100: #fff;
+
+  /* semantic colours */
+  --doc-color-semantic-bg-page: var(--doc-color-primitive-base-white);
+  --doc-color-semantic-bg-true-white: var(--doc-color-primitive-white-opacity-100);
+  --doc-color-semantic-bg-muted: var(--doc-color-primitive-neutral-100);
+  --doc-color-semantic-bg-destructive: var(--doc-color-primitive-berry-500);
+  --doc-color-semantic-border-focus: var(--doc-color-primitive-sky-200);
+  --doc-color-semantic-border-default: var(--doc-color-primitive-neutral-200);
+  --doc-color-semantic-border-strong: var(--doc-color-primitive-neutral-300);
+  --doc-color-semantic-text-primary: var(--doc-color-primitive-neutral-900);
+  --doc-color-semantic-text-primary-inverse: var(--doc-color-primitive-neutral-50);
+  --doc-color-semantic-text-subtle: var(--doc-color-primitive-neutral-500);
+  --doc-color-semantic-text-on-destructive: var(--doc-color-primitive-base-white);
+  --doc-color-semantic-link-default: var(--doc-color-primitive-sky-600);
+  --doc-color-semantic-link-hover: var(--doc-color-primitive-sky-700);
+  --doc-color-semantic-button-primary-bg: var(--doc-color-primitive-neutral-700);
+  --doc-color-semantic-button-primary-bg-hover: var(--doc-color-primitive-neutral-500);
+  --doc-color-semantic-button-primary-text: var(--doc-color-semantic-text-primary-inverse);
+  --doc-color-semantic-button-primary-icon: var(--doc-color-primitive-leaf-300);
+  --doc-color-semantic-button-secondary-bg: var(--doc-color-primitive-leaf-200);
+  --doc-color-semantic-button-secondary-bg-hover: var(--doc-color-primitive-leaf-100);
+  --doc-color-semantic-button-secondary-text: var(--doc-color-semantic-text-primary);
+  --doc-color-semantic-button-secondary-icon: var(--doc-color-primitive-neutral-700);
+  --doc-color-semantic-button-outline-bg: var(--doc-color-primitive-white-opacity-80);
+  --doc-color-semantic-button-outline-bg-hover: var(--doc-color-primitive-neutral-200);
+  --doc-color-semantic-button-outline-text: var(--doc-color-semantic-text-primary);
+  --doc-color-semantic-button-outline-icon: var(--doc-color-primitive-neutral-600);
+  --doc-color-semantic-button-disabled-bg: var(--doc-color-primitive-neutral-100);
+  --doc-color-semantic-button-disabled-text: var(--doc-color-semantic-text-subtle);
+  --doc-color-semantic-button-disabled-icon: var(--doc-color-primitive-neutral-400);
+
+  /* spacing */
+  --doc-space-1: 4px;
+  --doc-space-2: 8px;
+  --doc-space-3: 12px;
+  --doc-space-4: 16px;
+  --doc-space-5: 20px;
+  --doc-space-6: 24px;
+  --doc-space-8: 32px;
+  --doc-space-10: 40px;
+  --doc-space-12: 48px;
+  --doc-space-16: 64px;
+
+  /* corner radius */
+  --doc-radius-xs: 4px;
+  --doc-radius-sm: 6px;
+  --doc-radius-md: 8px;
+  --doc-radius-lg: 16px;
+  --doc-radius-xl: 24px;
+  --doc-radius-2xl: 32px;
+  --doc-radius-full: 9999px;
 }
 
 /* fallback fonts */
@@ -52,6 +180,12 @@
 @font-face {
   font-family: roboto-fallback;
   size-adjust: 99.529%;
+  src: local("Arial");
+}
+
+@font-face {
+  font-family: clear-sans-fallback;
+  size-adjust: 98.776%;
   src: local("Arial");
 }
 
@@ -180,61 +314,6 @@ a:any-link {
 a:hover {
   color: var(--link-hover-color);
   text-decoration: underline;
-}
-
-/* buttons */
-a.button:any-link,
-button {
-  box-sizing: border-box;
-  display: inline-block;
-  max-width: 100%;
-  margin: 12px 0;
-  border: 2px solid transparent;
-  padding: 0.5em 1.2em;
-  font-family: var(--body-font-family);
-  font-style: normal;
-  font-weight: 500;
-  line-height: 1.25;
-  text-align: center;
-  text-decoration: none;
-  background-color: var(--link-color);
-  color: var(--background-color);
-  cursor: pointer;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-a.button:hover,
-a.button:focus,
-button:hover,
-button:focus {
-  background-color: var(--link-hover-color);
-  cursor: pointer;
-}
-
-button:disabled,
-button:disabled:hover {
-  background-color: var(--light-color);
-  cursor: unset;
-}
-
-a.button.primary,
-button.primary {
-  background-color: var(--primary-color);
-  color: white;
-}
-
-a.button.secondary,
-button.secondary {
-  background-color: var(--secondary-color);
-  color: var(--text-color);
-}
-
-a.button.black,
-button.black {
-  background-color: var(--black);
-  color: white;
 }
 
 main img {
