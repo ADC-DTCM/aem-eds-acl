@@ -121,7 +121,7 @@
         },
         {
           "component": "select",
-          "name": "classes_shape",
+          "name": "classes",
           "label": "Shape",
           "valueType": "string",
           "value": "",

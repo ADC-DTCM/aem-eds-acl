@@ -88,6 +88,8 @@ const BUTTON_MODIFIERS = [
   'disabled',
 ];
 
+const MODIFIER_TEXT_VALUES = new Set(['round', 'new-tab', 'disabled']);
+
 const RESERVED_ICON_CLASSES = new Set(['icon-left', 'icon-right', 'icon-only']);
 
 /** Longest labels first so "Ghost Inverted" wins over "Ghost". */
@@ -260,8 +262,10 @@ function collectButtonModifiers(el, found) {
     });
   }
 
-  // Grouped fields: classes_shape (select), classes_new-tab / classes_disabled (boolean).
-  const shape = readUeProp(el, 'classes-shape') || readUeProp(el, 'classes_shape');
+  // Grouped fields: classes_shape (legacy), classes_new-tab / classes_disabled (boolean).
+  const shape = readUeProp(el, 'classes-shape')
+    || readUeProp(el, 'classes_shape')
+    || readUeProp(el, 'classes');
   if (shape === 'round') found.add('round');
 
   if (readUeProp(el, 'classes-new-tab') === 'true' || readUeProp(el, 'classes_new-tab') === 'true') {
@@ -270,6 +274,40 @@ function collectButtonModifiers(el, found) {
   if (readUeProp(el, 'classes-disabled') === 'true' || readUeProp(el, 'classes_disabled') === 'true') {
     found.add('disabled');
   }
+}
+
+/**
+ * UE may publish Shape / checkbox values as plain text beside the link (teaser CTA pattern).
+ * @param {HTMLAnchorElement} a
+ * @param {HTMLParagraphElement} p
+ * @param {Set<string>} found
+ */
+function harvestModifierTextNodes(a, p, found) {
+  if (!p) return;
+
+  const absorb = (el) => {
+    if (!el || el === a || el.contains(a)) return;
+    const text = el.textContent?.trim().toLowerCase();
+    if (!text || !MODIFIER_TEXT_VALUES.has(text)) return;
+    found.add(text);
+    el.remove();
+  };
+
+  [...p.childNodes].forEach((node) => {
+    if (node === a) return;
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent?.trim().toLowerCase();
+      if (text && MODIFIER_TEXT_VALUES.has(text)) {
+        found.add(text);
+        node.remove();
+      }
+      return;
+    }
+    if (node.nodeType === Node.ELEMENT_NODE) absorb(node);
+  });
+
+  const next = p.nextElementSibling;
+  if (next?.matches('p') && !next.querySelector('a[href]')) absorb(next);
 }
 
 /**
@@ -282,6 +320,7 @@ function getButtonModifiers(a, p) {
   const found = new Set();
   collectButtonModifiers(a, found);
   collectButtonModifiers(p, found);
+  harvestModifierTextNodes(a, p, found);
   let ancestor = p?.parentElement;
   for (let depth = 0; ancestor && depth < 4; depth += 1) {
     collectButtonModifiers(ancestor, found);
