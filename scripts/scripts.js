@@ -646,11 +646,56 @@ function applyButtonChrome(a, p, precomputed = {}) {
   }
 }
 
+/** Props stored on instrumented button nodes that must be applied before decoration. */
+const BUTTON_STORED_PROPS = [
+  ['classes', 'classes'],
+  ['linktype', 'linkType'],
+  ['disabled', 'disabled'],
+  ['open-in-new-tab', 'openInNewTab'],
+];
+
+/**
+ * Applies persisted UE props from data-aue-prop-* onto the button anchor.
+ * @param {Element} container
+ * @param {HTMLAnchorElement} anchor
+ */
+function applyStoredButtonProps(container, anchor) {
+  BUTTON_STORED_PROPS.forEach(([prop, patchName]) => {
+    const value = readUeProp(container, prop) || readUeProp(anchor, prop);
+    if (value == null || value === '') return;
+    if (prop === 'disabled' || prop === 'open-in-new-tab') {
+      syncAnchorFromPatch(anchor, patchName, value === 'true');
+      return;
+    }
+    syncAnchorFromPatch(anchor, patchName, value);
+  });
+}
+
+/**
+ * Syncs persisted UE props onto anchors before decoration (author reload).
+ * @param {HTMLElement} main
+ */
+function primeButtonProps(main) {
+  main.querySelectorAll('[data-aue-model="button"]').forEach((container) => {
+    const anchor = container.querySelector('a[href]');
+    if (anchor) applyStoredButtonProps(container, anchor);
+  });
+
+  main.querySelectorAll('[data-aue-prop-classes], [data-aue-prop-linktype], [data-aue-prop-disabled], [data-aue-prop-open-in-new-tab]').forEach((el) => {
+    const container = findButtonContainers(el)[0];
+    if (!container) return;
+    const anchor = container.querySelector('a[href]') || (el.matches('a[href]') ? el : null);
+    if (anchor) applyStoredButtonProps(container, anchor);
+  });
+}
+
 /**
  * Decorates formatted links to style them as buttons.
  * @param {HTMLElement} main The main container element
  */
 export function decorateButtons(main) {
+  primeButtonProps(main);
+
   main.querySelectorAll('p a[href]').forEach((a) => {
     const p = a.closest('p');
     if (!p) return;
@@ -701,31 +746,6 @@ export function decorateButtons(main) {
   });
 }
 
-/** Props stored on instrumented button nodes that must be applied before decoration. */
-const BUTTON_STORED_PROPS = [
-  ['classes', 'classes'],
-  ['linktype', 'linkType'],
-  ['disabled', 'disabled'],
-  ['open-in-new-tab', 'openInNewTab'],
-];
-
-/**
- * Applies persisted UE props from data-aue-prop-* onto the button anchor.
- * @param {Element} container
- * @param {HTMLAnchorElement} anchor
- */
-function applyStoredButtonProps(container, anchor) {
-  BUTTON_STORED_PROPS.forEach(([prop, patchName]) => {
-    const value = readUeProp(container, prop) || readUeProp(anchor, prop);
-    if (value == null || value === '') return;
-    if (prop === 'disabled' || prop === 'open-in-new-tab') {
-      syncAnchorFromPatch(anchor, patchName, value === 'true');
-      return;
-    }
-    syncAnchorFromPatch(anchor, patchName, value);
-  });
-}
-
 /**
  * Re-decorates buttons after UE adds data-aue-prop-* on load or reload.
  * @param {Document|Element} [root]
@@ -768,6 +788,42 @@ export function applyButtonLivePatch(event) {
   const scope = element.closest('.section') || element.closest('main') || element.parentElement;
   if (scope) decorateButtons(scope);
   return true;
+}
+
+/**
+ * Re-runs decoration when UE writes data-aue-prop-* after initial page load.
+ */
+function watchButtonInstrumentation() {
+  if (!document.querySelector('[data-aue-resource], [data-aue-model]')) return;
+
+  let scheduled = false;
+  const rerun = () => {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(() => {
+      scheduled = false;
+      const main = document.querySelector('main');
+      if (main) decorateButtons(main);
+    });
+  };
+
+  new MutationObserver(rerun).observe(document, {
+    attributeFilter: [
+      'data-aue-prop-classes',
+      'data-aue-prop-linktype',
+      'data-aue-prop-disabled',
+      'data-aue-prop-open-in-new-tab',
+      'data-aue-model',
+    ],
+    subtree: true,
+  });
+
+  [100, 500, 1500, 3000].forEach((ms) => {
+    window.setTimeout(() => {
+      const main = document.querySelector('main');
+      if (main) decorateButtons(main);
+    }, ms);
+  });
 }
 
 /**
@@ -839,6 +895,7 @@ function loadDelayed() {
 
 async function loadPage() {
   await loadEager(document);
+  watchButtonInstrumentation();
   await loadLazy(document);
   loadDelayed();
 }
