@@ -227,13 +227,23 @@ function readUeProp(el, prop) {
   }
   if (prop === 'linktype') {
     const match = [...el.attributes].find(({ name, value }) => (
-      name.startsWith('data-aue-prop-link') && name.includes('type') && value
+      name.startsWith('data-aue-prop-') && /link.?type/i.test(name.slice('data-aue-prop-'.length)) && value
+    ));
+    if (match) return match.value;
+  }
+  if (prop === 'classes') {
+    const match = [...el.attributes].find(({ name, value }) => (
+      name.startsWith('data-aue-prop-') && name.includes('classes') && value
     ));
     if (match) return match.value;
   }
   const camel = prop.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
   const fromDataset = el.dataset?.[camel];
   return fromDataset != null && fromDataset !== '' ? fromDataset : null;
+}
+
+function isUeButtonComponent(a) {
+  return !!a?.closest?.('[data-aue-model="button"]');
 }
 
 /**
@@ -258,17 +268,21 @@ function getButtonVariant(a, strong, em) {
     || a.dataset?.linkType;
   if (linkTypeAttr && BUTTON_VARIANTS.includes(linkTypeAttr)) return linkTypeAttr;
 
-  const fromTitle = getVariantFromLabel(a.getAttribute('title') || '');
-  if (fromTitle) return fromTitle;
+  // UE button link text (e.g. "Primary") must not override the Variation field.
+  if (!isUeButtonComponent(a)) {
+    const fromTitle = getVariantFromLabel(a.getAttribute('title') || '');
+    if (fromTitle) return fromTitle;
 
-  const fromLabel = getVariantFromLabel(getButtonLabel(a));
-  if (fromLabel) return fromLabel;
+    const fromLabel = getVariantFromLabel(getButtonLabel(a));
+    if (fromLabel) return fromLabel;
+  }
+
   if (a.classList.contains('accent')) return 'primary';
   if (strong && em) return 'primary';
   if (strong) return 'primary';
   if (em) return 'secondary';
-  // UE buttons default to primary; Options (e.g. round) must not drop the variant.
-  if (a.classList.contains('button')) return 'primary';
+  // UE buttons default to primary until data-aue-prop-linktype is hydrated on reload.
+  if (a.classList.contains('button') || isUeButtonComponent(a)) return 'primary';
   return null;
 }
 
@@ -636,21 +650,24 @@ function getButtonModifiers(a, p) {
  * @param {HTMLElement} main
  */
 function primeButtonProps(main) {
+  const primed = new Set();
+
+  const primeOne = (container, anchor) => {
+    if (!anchor || primed.has(anchor)) return;
+    primed.add(anchor);
+    applyStoredButtonProps(container, anchor);
+  };
+
   main.querySelectorAll('[data-aue-model="button"]').forEach((container) => {
-    const anchor = container.querySelector('a[href]');
-    if (!anchor) return;
+    primeOne(container, container.querySelector('a[href]'));
+  });
 
-    const linkType = readUeProp(container, 'linktype') || readUeProp(anchor, 'linktype');
-    if (linkType && BUTTON_VARIANTS.includes(linkType)) {
-      anchor.classList.add(linkType);
-    }
-
-    [container, anchor].forEach((el) => {
-      const classes = readUeProp(el, 'classes');
-      if (!classes) return;
-      const found = new Set();
-      ingestModifierValue(classes, found);
-      found.forEach((mod) => anchor.classList.add(mod));
+  main.querySelectorAll(
+    '[data-aue-prop-linktype], [data-aue-prop-link-type], [data-aue-prop-linkType], [data-aue-prop-classes]',
+  ).forEach((el) => {
+    findButtonContainers(el).forEach((container) => {
+      const anchor = container.querySelector('a[href]') || (el.matches('a[href]') ? el : null);
+      primeOne(container, anchor);
     });
   });
 }
@@ -742,8 +759,14 @@ export function decorateButtons(main) {
     const p = a.closest('p');
     if (!p) return;
 
+    const isUeButton = p.matches('[data-aue-model="button"]');
+
     // Published / UE buttons already have .button; still map Options classes.
-    if (a.classList.contains('button')) {
+    if (a.classList.contains('button') || isUeButton) {
+      if (isUeButton) {
+        p.classList.add('button-wrapper');
+        a.classList.add('button');
+      }
       applyButtonChrome(a, p);
       return;
     }

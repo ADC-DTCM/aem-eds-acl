@@ -109,7 +109,8 @@ async function applyChanges(event) {
           newElements.forEach((newEl) => mergeButtonUeState(element, newEl));
           element.replaceWith(...newElements);
           newElements.forEach((el) => applyButtonPatchFromUe(el, getButtonPatchFromEvent(detail)));
-          decorateButtons(parentElement);
+          const decorateScope = parentElement?.closest('.section') || parentElement?.closest('main') || parentElement;
+          decorateButtons(decorateScope);
           decorateIcons(parentElement);
           decorateRichtext(parentElement);
           applyPatchAfterDecorate(parentElement, event);
@@ -145,20 +146,53 @@ function attachEventListeners(main) {
 
 attachEventListeners(document.querySelector('main'));
 
+const BUTTON_UE_ATTRS = [
+  'data-aue-model',
+  'data-aue-prop-linktype',
+  'data-aue-prop-link-type',
+  'data-aue-prop-linkType',
+  'data-aue-prop-classes',
+  'data-aue-prop-disabled',
+  'data-aue-prop-open-in-new-tab',
+];
+
+function scheduleButtonDecorate() {
+  const main = document.querySelector('main');
+  if (!main) return;
+  decorateButtons(main);
+  [50, 250, 1000, 2500].forEach((ms) => {
+    window.setTimeout(() => decorateButtons(main), ms);
+  });
+}
+
+scheduleButtonDecorate();
+
 const buttonPropObserver = new MutationObserver((mutations) => {
   const main = document.querySelector('main');
   if (!main) return;
-  const shouldDecorate = mutations.some(({ target, attributeName }) => (
-    attributeName?.startsWith('data-aue-prop-')
-    && (attributeName.includes('classes') || attributeName.includes('link'))
-    && (target.matches('[data-aue-model="button"], [data-aue-prop-classes], [data-aue-prop-linktype], [data-aue-prop-link-type]')
-      || target.closest('[data-aue-model="button"]'))
-  ));
+  const shouldDecorate = mutations.some(({ target, attributeName, type }) => {
+    if (type !== 'attributes' || !attributeName) return false;
+    if (attributeName === 'data-aue-model' && target.getAttribute('data-aue-model') === 'button') {
+      return true;
+    }
+    if (!attributeName.startsWith('data-aue-prop-')) return false;
+    return target.matches('[data-aue-model="button"], a[href]')
+      || !!target.closest('[data-aue-model="button"]');
+  });
   if (shouldDecorate) decorateButtons(main);
 });
-buttonPropObserver.observe(document, {
-  attributeFilter: ['data-aue-prop-classes', 'data-aue-prop-linktype', 'data-aue-prop-link-type'],
-  subtree: true,
+
+const observeRoot = document.querySelector('main') || document.body;
+if (observeRoot) {
+  buttonPropObserver.observe(observeRoot, {
+    attributes: true,
+    subtree: true,
+    attributeFilter: BUTTON_UE_ATTRS,
+  });
+}
+
+document.body?.addEventListener('aue:ui-select', () => {
+  scheduleButtonDecorate();
 });
 
 // decorate rich text
