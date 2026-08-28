@@ -14,6 +14,7 @@ import {
   applyButtonPatchFromUe,
   applyButtonLivePatch,
   getButtonPatchFromEvent,
+  mergeButtonUeState,
 } from './scripts.js';
 
 let promiseChanges$ = Promise.resolve();
@@ -71,7 +72,11 @@ async function applyChanges(event) {
       if (newBlock) {
         newBlock.style.display = 'none';
         block.insertAdjacentElement('afterend', newBlock);
-        applyButtonPatchFromUe(newBlock, getButtonPatchFromEvent(detail));
+        const patch = getButtonPatchFromEvent(detail);
+        const oldButton = block.querySelector(`[data-aue-resource="${resource}"]`);
+        const newButton = newBlock.querySelector(`[data-aue-resource="${resource}"]`);
+        if (oldButton && newButton) mergeButtonUeState(oldButton, newButton);
+        applyButtonPatchFromUe(newBlock, patch);
         decorateButtons(newBlock);
         decorateIcons(newBlock);
         decorateBlock(newBlock);
@@ -101,6 +106,7 @@ async function applyChanges(event) {
           newSection.style.display = null;
           applyPatchAfterDecorate(newSection, event);
         } else {
+          newElements.forEach((newEl) => mergeButtonUeState(element, newEl));
           element.replaceWith(...newElements);
           newElements.forEach((el) => applyButtonPatchFromUe(el, getButtonPatchFromEvent(detail)));
           decorateButtons(parentElement);

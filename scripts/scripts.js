@@ -444,7 +444,94 @@ export function applyButtonPatchFromUe(root, patch) {
       anchor?.setAttribute(`data-aue-prop-${prop}`, value);
     }
     syncAnchorFromPatch(anchor, patch.name, patch.value);
+
+    // Partial UE patches must not drop other stored button props.
+    if (patch.name !== 'classes') {
+      const classes = readUeProp(button, 'classes') || readUeProp(anchor, 'classes');
+      if (classes) syncAnchorFromPatch(anchor, 'classes', classes);
+    }
+    if (patch.name !== 'linkType') {
+      const linkType = readUeProp(button, 'linktype') || readUeProp(anchor, 'linktype');
+      if (linkType) syncAnchorFromPatch(anchor, 'linkType', linkType);
+    }
   });
+}
+
+/**
+ * Merges multiselect classes patch values (UE may send only the toggled option).
+ * @param {string|null|undefined} existing
+ * @param {unknown} incoming
+ * @returns {string}
+ */
+function mergeClassesPatch(existing, incoming) {
+  const merged = new Set();
+  ingestModifierValue(existing, merged);
+  ingestModifierValue(incoming, merged);
+  return [...merged].join(' ');
+}
+
+/**
+ * Applies all persisted data-aue-prop-* values onto the live button anchor.
+ * @param {Element} container
+ * @param {HTMLAnchorElement|null} anchor
+ */
+function applyStoredButtonProps(container, anchor) {
+  if (!anchor) return;
+
+  const linkType = readUeProp(container, 'linktype') || readUeProp(anchor, 'linktype');
+  if (linkType) syncAnchorFromPatch(anchor, 'linkType', linkType);
+
+  const classes = readUeProp(container, 'classes') || readUeProp(anchor, 'classes');
+  if (classes) syncAnchorFromPatch(anchor, 'classes', classes);
+
+  container.classList.add('button-wrapper');
+  anchor.classList.add('button');
+}
+
+/**
+ * Copies button UE props from a replaced node so Variation/Options survive partial patches.
+ * @param {Element} from
+ * @param {Element} to
+ */
+export function mergeButtonUeState(from, to) {
+  if (!from?.attributes || !to?.attributes) return;
+
+  const fromContainer = findButtonContainers(from)[0] || from;
+  const toContainer = findButtonContainers(to)[0] || to;
+  if (!fromContainer || !toContainer) return;
+
+  const copyProps = (source, target) => {
+    [...source.attributes].forEach(({ name, value }) => {
+      if (!name.startsWith('data-aue-prop-') || target.hasAttribute(name)) return;
+      target.setAttribute(name, value);
+    });
+  };
+
+  copyProps(fromContainer, toContainer);
+  copyProps(from, toContainer);
+
+  const fromAnchor = fromContainer.querySelector?.('a[href]')
+    || (fromContainer.matches?.('a[href]') ? fromContainer : null);
+  const toAnchor = toContainer.querySelector?.('a[href]')
+    || (toContainer.matches?.('a[href]') ? toContainer : null);
+
+  if (fromAnchor && toAnchor) {
+    copyProps(fromAnchor, toAnchor);
+  }
+
+  const fromClasses = readUeProp(fromContainer, 'classes') || readUeProp(fromAnchor, 'classes');
+  const toClasses = readUeProp(toContainer, 'classes') || readUeProp(toAnchor, 'classes');
+  const mergedClasses = mergeClassesPatch(fromClasses, toClasses);
+  if (mergedClasses) {
+    toContainer.setAttribute('data-aue-prop-classes', mergedClasses);
+    toAnchor?.setAttribute('data-aue-prop-classes', mergedClasses);
+  }
+
+  if (fromContainer.classList.contains('button-wrapper')) {
+    toContainer.classList.add('button-wrapper');
+  }
+
+  applyStoredButtonProps(toContainer, toAnchor);
 }
 
 /**
