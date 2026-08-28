@@ -22,17 +22,6 @@
   "models": [
     {
       "id": "button",
-      "modelFields": [
-        "linkType",
-        "link",
-        "linkText",
-        "linkTitle",
-        "icon",
-        "iconPosition",
-        "classes",
-        "disabled",
-        "openInNewTab"
-      ],
       "fields": [
         {
           "component": "select",
@@ -79,10 +68,7 @@
           "valueType": "string",
           "value": "",
           "multi": false,
-          "description": "Select a page from this site (not DAM assets).",
-          "validation": {
-            "rootPath": "/content/aem-eds-acl/"
-          }
+          "description": "Select a page from this site."
         },
         {
           "component": "text",
@@ -140,12 +126,12 @@
           }
         },
         {
-          "component": "multiselect",
+          "component": "select",
           "name": "classes",
           "label": "Shape",
           "valueType": "string",
-          "maxSize": 1,
-          "description": "Default uses 8px radius. Rounded is the pill shape. Size follows the viewport (Small / Default / Large / Extra-Large).",
+          "value": "",
+          "description": "Default uses 8px radius. Rounded is the pill shape.",
           "options": [
             {
               "name": "Default",

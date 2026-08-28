@@ -8,9 +8,26 @@ import {
   loadSections,
 } from './aem.js';
 import { decorateRichtext } from './editor-support-rte.js';
-import { decorateMain, decorateButtons, applyButtonPatchFromUe } from './scripts.js';
+import {
+  decorateMain,
+  decorateButtons,
+  applyButtonPatchFromUe,
+  applyButtonLivePatch,
+  getButtonPatchFromEvent,
+} from './scripts.js';
+
+let promiseChanges$ = Promise.resolve();
+
+function applyPatchAfterDecorate(scope, event) {
+  const patch = getButtonPatchFromEvent(event?.detail);
+  if (!patch?.name || !scope) return;
+  applyButtonPatchFromUe(scope, patch);
+  decorateButtons(scope.closest('.section') || scope.closest('main') || scope);
+}
 
 async function applyChanges(event) {
+  await promiseChanges$;
+
   // redecorate default content and blocks on patches (in the properties rail)
   const { detail } = event;
 
@@ -19,7 +36,7 @@ async function applyChanges(event) {
     || detail?.request?.to?.container?.resource; // move in sections
   if (!resource) return false;
   const updates = detail?.response?.updates;
-  if (!updates.length) return false;
+  if (!updates?.length) return false;
   const { content } = updates[0];
   if (!content) return false;
 
@@ -40,6 +57,7 @@ async function applyChanges(event) {
       await loadSections(newMain);
       element.remove();
       newMain.style.display = null;
+      applyPatchAfterDecorate(newMain, event);
       // eslint-disable-next-line no-use-before-define
       attachEventListners(newMain);
       return true;
@@ -52,6 +70,7 @@ async function applyChanges(event) {
       if (newBlock) {
         newBlock.style.display = 'none';
         block.insertAdjacentElement('afterend', newBlock);
+        applyButtonPatchFromUe(newBlock, getButtonPatchFromEvent(detail));
         decorateButtons(newBlock);
         decorateIcons(newBlock);
         decorateBlock(newBlock);
@@ -59,6 +78,7 @@ async function applyChanges(event) {
         await loadBlock(newBlock);
         block.remove();
         newBlock.style.display = null;
+        applyPatchAfterDecorate(newBlock, event);
         return true;
       }
     } else {
@@ -78,12 +98,14 @@ async function applyChanges(event) {
           await loadSections(parentElement);
           element.remove();
           newSection.style.display = null;
+          applyPatchAfterDecorate(newSection, event);
         } else {
           element.replaceWith(...newElements);
-          newElements.forEach((el) => applyButtonPatchFromUe(el, detail?.patch));
+          newElements.forEach((el) => applyButtonPatchFromUe(el, getButtonPatchFromEvent(detail)));
           decorateButtons(parentElement);
           decorateIcons(parentElement);
           decorateRichtext(parentElement);
+          applyPatchAfterDecorate(parentElement, event);
         }
         return true;
       }
@@ -103,8 +125,14 @@ function attachEventListners(main) {
     'aue:content-copy',
   ].forEach((eventType) => main?.addEventListener(eventType, async (event) => {
     event.stopPropagation();
-    const applied = await applyChanges(event);
-    if (!applied) window.location.reload();
+    applyButtonLivePatch(event);
+    promiseChanges$ = applyChanges(event);
+    const applied = await promiseChanges$;
+    if (applied) {
+      applyButtonLivePatch(event);
+    } else if (!applyButtonLivePatch(event)) {
+      window.location.reload();
+    }
   }));
 }
 
