@@ -321,19 +321,21 @@ export function getButtonPatchFromEvent(detail) {
 }
 
 /**
- * Finds button containers related to a patched UE resource.
+ * Finds the single button container for a patched UE resource node.
+ * Never returns sibling buttons from a shared parent.
  * @param {Element|null} root
  * @returns {Element[]}
  */
 function findButtonContainers(root) {
-  if (!root?.matches && !root?.querySelector) return [];
-  if (root.matches?.('[data-aue-model="button"]')) return [root];
-  const fromRoot = [...(root.querySelectorAll?.('[data-aue-model="button"]') || [])];
-  if (fromRoot.length) return fromRoot;
-  const anchor = root.matches?.('a[href].button, a[href]') ? root : root.querySelector?.('a[href]');
-  if (anchor) {
-    const container = anchor.closest('[data-aue-model="button"]') || anchor.closest('p');
-    if (container) return [container];
+  if (!root?.matches) return [];
+  if (root.matches('[data-aue-model="button"]')) return [root];
+  const owned = root.closest('[data-aue-model="button"]');
+  if (owned) return [owned];
+  if (root.matches('p') && root.querySelector('a[href]')) return [root];
+  const link = root.matches('a[href]') ? root : null;
+  if (link) {
+    const p = link.closest('p');
+    return p ? [p] : [];
   }
   return [];
 }
@@ -516,12 +518,11 @@ function getButtonModifiers(a, p) {
   const found = new Set();
   collectButtonModifiers(a, found);
   collectButtonModifiers(p, found);
-  harvestModifierTextNodes(a, p, found);
-  let ancestor = p?.parentElement;
-  for (let depth = 0; ancestor && depth < 4; depth += 1) {
-    collectButtonModifiers(ancestor, found);
-    ancestor = ancestor.parentElement;
+  const ueContainer = getButtonUeContainer(a);
+  if (ueContainer && ueContainer !== a && ueContainer !== p) {
+    collectButtonModifiers(ueContainer, found);
   }
+  harvestModifierTextNodes(a, p, found);
   return BUTTON_MODIFIERS.filter((mod) => found.has(mod));
 }
 

@@ -18,11 +18,12 @@ import {
 
 let promiseChanges$ = Promise.resolve();
 
-function applyPatchAfterDecorate(scope, event) {
-  const patch = getButtonPatchFromEvent(event?.detail);
-  if (!patch?.name || !scope) return;
-  applyButtonPatchFromUe(scope, patch);
-  decorateButtons(scope.closest('.section') || scope.closest('main') || scope);
+/**
+ * Re-applies a patch to the patched resource only, then redecorates its section.
+ * @param {CustomEvent} event
+ */
+function applyPatchAfterDecorate(event) {
+  applyButtonLivePatch(event);
 }
 
 async function applyChanges(event) {
@@ -57,7 +58,7 @@ async function applyChanges(event) {
       await loadSections(newMain);
       element.remove();
       newMain.style.display = null;
-      applyPatchAfterDecorate(newMain, event);
+      applyPatchAfterDecorate(event);
       // eslint-disable-next-line no-use-before-define
       attachEventListners(newMain);
       return true;
@@ -70,7 +71,7 @@ async function applyChanges(event) {
       if (newBlock) {
         newBlock.style.display = 'none';
         block.insertAdjacentElement('afterend', newBlock);
-        applyButtonPatchFromUe(newBlock, getButtonPatchFromEvent(detail));
+        applyButtonPatchFromUe(element, getButtonPatchFromEvent(detail));
         decorateButtons(newBlock);
         decorateIcons(newBlock);
         decorateBlock(newBlock);
@@ -78,7 +79,7 @@ async function applyChanges(event) {
         await loadBlock(newBlock);
         block.remove();
         newBlock.style.display = null;
-        applyPatchAfterDecorate(newBlock, event);
+        applyPatchAfterDecorate(event);
         return true;
       }
     } else {
@@ -98,14 +99,13 @@ async function applyChanges(event) {
           await loadSections(parentElement);
           element.remove();
           newSection.style.display = null;
-          applyPatchAfterDecorate(newSection, event);
+          applyPatchAfterDecorate(event);
         } else {
           element.replaceWith(...newElements);
           newElements.forEach((el) => applyButtonPatchFromUe(el, getButtonPatchFromEvent(detail)));
           decorateButtons(parentElement);
           decorateIcons(parentElement);
           decorateRichtext(parentElement);
-          applyPatchAfterDecorate(parentElement, event);
         }
         return true;
       }
