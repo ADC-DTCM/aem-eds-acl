@@ -201,6 +201,31 @@ function getButtonUeContainer(a) {
   return a.closest('[data-aue-model="button"]') || a.closest('.button-wrapper') || a.closest('p');
 }
 
+/** Maps model field names to UE data-aue-prop-* suffixes. */
+const UE_PROP_ALIASES = {
+  linkType: 'linktype',
+  openInNewTab: 'open-in-new-tab',
+};
+
+function toUePropAttr(name) {
+  if (UE_PROP_ALIASES[name]) return UE_PROP_ALIASES[name];
+  return name.replace(/([A-Z])/g, '-$1').toLowerCase();
+}
+
+/**
+ * Reads a UE property from data attributes (supports camelCase dataset keys).
+ * @param {Element} el
+ * @param {string} prop
+ * @returns {string|null}
+ */
+function readUeProp(el, prop) {
+  const attr = el.getAttribute(`data-aue-prop-${prop}`);
+  if (attr != null && attr !== '') return attr;
+  const camel = prop.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+  const fromDataset = el.dataset?.[camel];
+  return fromDataset != null && fromDataset !== '' ? fromDataset : null;
+}
+
 /**
  * Resolves the button variation from classes or DA formatting (bold/italic).
  * @param {HTMLAnchorElement} a
@@ -216,7 +241,9 @@ function getButtonVariant(a, strong, em) {
 
   const container = getButtonUeContainer(a);
   const linkTypeAttr = readUeProp(a, 'linktype')
+    || readUeProp(a, 'link-type')
     || readUeProp(container, 'linktype')
+    || readUeProp(container, 'link-type')
     || a.getAttribute('data-linktype')
     || a.dataset?.linkType;
   if (linkTypeAttr && BUTTON_VARIANTS.includes(linkTypeAttr)) return linkTypeAttr;
@@ -233,10 +260,6 @@ function getButtonVariant(a, strong, em) {
   // UE buttons default to primary; Options (e.g. round) must not drop the variant.
   if (a.classList.contains('button')) return 'primary';
   return null;
-}
-
-function toUePropAttr(name) {
-  return name.replace(/([A-Z])/g, '-$1').toLowerCase();
 }
 
 /**
@@ -403,41 +426,6 @@ export function applyButtonPatchFromUe(root, patch) {
     }
     syncAnchorFromPatch(anchor, patch.name, patch.value);
   });
-}
-
-/**
- * Applies a live UE patch to the in-canvas button and redecorates nearby content.
- * @param {CustomEvent} event
- * @returns {boolean}
- */
-export function applyButtonLivePatch(event) {
-  const patch = getButtonPatchFromEvent(event?.detail);
-  if (!patch?.name || !BUTTON_PATCH_PROPS.has(patch.name)) return false;
-
-  const resource = event.detail?.request?.target?.resource;
-  if (!resource) return false;
-
-  const element = document.querySelector(`[data-aue-resource="${resource}"]`);
-  if (!element) return false;
-
-  applyButtonPatchFromUe(element, patch);
-  const scope = element.closest('.section') || element.closest('main') || element.parentElement;
-  if (scope) decorateButtons(scope);
-  return true;
-}
-
-/**
- * Reads a UE property from data attributes (supports camelCase dataset keys).
- * @param {Element} el
- * @param {string} prop
- * @returns {string|null}
- */
-function readUeProp(el, prop) {
-  const attr = el.getAttribute(`data-aue-prop-${prop}`);
-  if (attr != null && attr !== '') return attr;
-  const camel = prop.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
-  const fromDataset = el.dataset?.[camel];
-  return fromDataset != null && fromDataset !== '' ? fromDataset : null;
 }
 
 /**
@@ -666,6 +654,27 @@ export function decorateButtons(main) {
       em.replaceWith(a);
     }
   });
+}
+
+/**
+ * Applies a live UE patch to the in-canvas button and redecorates nearby content.
+ * @param {CustomEvent} event
+ * @returns {boolean}
+ */
+export function applyButtonLivePatch(event) {
+  const patch = getButtonPatchFromEvent(event?.detail);
+  if (!patch?.name || !BUTTON_PATCH_PROPS.has(patch.name)) return false;
+
+  const resource = event.detail?.request?.target?.resource;
+  if (!resource) return false;
+
+  const element = document.querySelector(`[data-aue-resource="${resource}"]`);
+  if (!element) return false;
+
+  applyButtonPatchFromUe(element, patch);
+  const scope = element.closest('.section') || element.closest('main') || element.parentElement;
+  if (scope) decorateButtons(scope);
+  return true;
 }
 
 /**
