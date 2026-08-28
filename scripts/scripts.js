@@ -201,6 +201,17 @@ function getButtonUeContainer(a) {
   return a.closest('[data-aue-model="button"]') || a.closest('.button-wrapper') || a.closest('p');
 }
 
+/**
+ * True when the link is a UE Button (instrumentation or Franklin button resource).
+ * @param {HTMLAnchorElement} a
+ * @returns {boolean}
+ */
+function isUeButtonLink(a) {
+  if (a.hasAttribute('data-aue-resource')) return true;
+  if (a.closest('[data-aue-model="button"]')) return true;
+  return [...a.attributes].some(({ name }) => name.startsWith('data-aue-prop-'));
+}
+
 /** Maps model field names to UE data-aue-prop-* suffixes. */
 const UE_PROP_ALIASES = {
   linkType: 'linktype',
@@ -710,8 +721,15 @@ export function decorateButtons(main) {
       .some((img) => !img.closest('.icon'));
     if (hasNonIconImage) return;
 
+    const ueButton = isUeButtonLink(a);
+    if (ueButton) {
+      const container = a.closest('[data-aue-model="button"]') || p;
+      applyStoredButtonProps(container, a);
+      harvestModifierTextNodes(a, p, new Set());
+    }
+
     const label = getButtonLabel(a);
-    if (getButtonLabel(p) !== label) return;
+    if (!ueButton && getButtonLabel(p) !== label) return;
 
     const strong = a.closest('strong');
     const em = a.closest('em');
@@ -794,8 +812,6 @@ export function applyButtonLivePatch(event) {
  * Re-runs decoration when UE writes data-aue-prop-* after initial page load.
  */
 function watchButtonInstrumentation() {
-  if (!document.querySelector('[data-aue-resource], [data-aue-model]')) return;
-
   let scheduled = false;
   const rerun = () => {
     if (scheduled) return;
@@ -803,7 +819,7 @@ function watchButtonInstrumentation() {
     requestAnimationFrame(() => {
       scheduled = false;
       const main = document.querySelector('main');
-      if (main) decorateButtons(main);
+      if (main) applyButtonInstrumentation(main);
     });
   };
 
@@ -814,16 +830,16 @@ function watchButtonInstrumentation() {
       'data-aue-prop-disabled',
       'data-aue-prop-open-in-new-tab',
       'data-aue-model',
+      'data-aue-resource',
     ],
     subtree: true,
   });
 
-  [100, 500, 1500, 3000].forEach((ms) => {
-    window.setTimeout(() => {
-      const main = document.querySelector('main');
-      if (main) decorateButtons(main);
-    }, ms);
+  [100, 500, 1500, 3000, 5000, 8000].forEach((ms) => {
+    window.setTimeout(rerun, ms);
   });
+
+  window.addEventListener('load', rerun, { once: true });
 }
 
 /**
