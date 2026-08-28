@@ -692,7 +692,7 @@ function primeButtonProps(main) {
     if (anchor) applyStoredButtonProps(container, anchor);
   });
 
-  main.querySelectorAll('[data-aue-prop-classes], [data-aue-prop-linktype], [data-aue-prop-disabled], [data-aue-prop-open-in-new-tab]').forEach((el) => {
+  main.querySelectorAll('[data-aue-prop-classes], [data-aue-prop-classes-shape], [data-aue-prop-linktype], [data-aue-prop-disabled], [data-aue-prop-open-in-new-tab]').forEach((el) => {
     const container = findButtonContainers(el)[0];
     if (!container) return;
     const anchor = container.querySelector('a[href]') || (el.matches('a[href]') ? el : null);
@@ -777,7 +777,7 @@ export function applyButtonInstrumentation(root = document) {
     if (anchor) applyStoredButtonProps(container, anchor);
   });
 
-  main.querySelectorAll('[data-aue-prop-classes], [data-aue-prop-linktype], [data-aue-prop-disabled], [data-aue-prop-open-in-new-tab]').forEach((el) => {
+  main.querySelectorAll('[data-aue-prop-classes], [data-aue-prop-classes-shape], [data-aue-prop-linktype], [data-aue-prop-disabled], [data-aue-prop-open-in-new-tab]').forEach((el) => {
     const container = findButtonContainers(el)[0];
     if (!container) return;
     const anchor = container.querySelector('a[href]') || (el.matches('a[href]') ? el : null);
@@ -812,20 +812,15 @@ export function applyButtonLivePatch(event) {
  * Re-runs decoration when UE writes data-aue-prop-* after initial page load.
  */
 function watchButtonInstrumentation() {
-  let scheduled = false;
   const rerun = () => {
-    if (scheduled) return;
-    scheduled = true;
-    requestAnimationFrame(() => {
-      scheduled = false;
-      const main = document.querySelector('main');
-      if (main) applyButtonInstrumentation(main);
-    });
+    const main = document.querySelector('main');
+    if (main) applyButtonInstrumentation(main);
   };
 
-  new MutationObserver(rerun).observe(document, {
+  new MutationObserver(rerun).observe(document.documentElement, {
     attributeFilter: [
       'data-aue-prop-classes',
+      'data-aue-prop-classes-shape',
       'data-aue-prop-linktype',
       'data-aue-prop-disabled',
       'data-aue-prop-open-in-new-tab',
@@ -835,7 +830,20 @@ function watchButtonInstrumentation() {
     subtree: true,
   });
 
-  [100, 500, 1500, 3000, 5000, 8000].forEach((ms) => {
+  // UE often writes instrumentation after decorateMain; poll until props settle.
+  let attempts = 0;
+  const poll = window.setInterval(() => {
+    attempts += 1;
+    if (attempts > 24) {
+      window.clearInterval(poll);
+      return;
+    }
+    if (document.querySelector('[data-aue-prop-classes], [data-aue-prop-classes-shape], [data-aue-model="button"], [data-aue-resource]')) {
+      rerun();
+    }
+  }, 500);
+
+  [100, 500, 1500, 3000, 5000, 8000, 12000].forEach((ms) => {
     window.setTimeout(rerun, ms);
   });
 
@@ -866,7 +874,8 @@ async function loadEager(doc) {
   if (main) {
     decorateMain(main);
     document.body.classList.add('appear');
-    await loadSection(main.querySelector('.section'), waitForFirstImage);
+    const section = main.querySelector('.section');
+    if (section) await loadSection(section, waitForFirstImage);
   }
 
   try {
@@ -910,8 +919,8 @@ function loadDelayed() {
 }
 
 async function loadPage() {
-  await loadEager(document);
   watchButtonInstrumentation();
+  await loadEager(document);
   await loadLazy(document);
   loadDelayed();
 }

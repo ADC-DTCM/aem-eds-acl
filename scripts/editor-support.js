@@ -164,9 +164,10 @@ observer.observe(document, { attributeFilter: ['data-richtext-prop'], subtree: t
 
 // Re-decorate buttons when UE writes persisted props after reload (data-aue-prop-*).
 const buttonObserver = new MutationObserver(() => scheduleButtonInstrumentation());
-buttonObserver.observe(document, {
+buttonObserver.observe(document.documentElement, {
   attributeFilter: [
     'data-aue-prop-classes',
+    'data-aue-prop-classes-shape',
     'data-aue-prop-linktype',
     'data-aue-prop-disabled',
     'data-aue-prop-open-in-new-tab',
