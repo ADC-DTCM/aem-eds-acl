@@ -90,6 +90,29 @@ const BUTTON_MODIFIERS = [
 
 const RESERVED_ICON_CLASSES = new Set(['icon-left', 'icon-right', 'icon-only']);
 
+/** Longest labels first so "Ghost Inverted" wins over "Ghost". */
+const VARIANT_LABELS = [
+  ['ghost inverted', 'ghost-inverted'],
+  ['ghost-inverted', 'ghost-inverted'],
+  ['destructive', 'destructive'],
+  ['secondary', 'secondary'],
+  ['outline', 'outline'],
+  ['primary', 'primary'],
+  ['ghost', 'ghost'],
+  ['link', 'link'],
+];
+
+/**
+ * Maps visible link text to a button variant (UE labels without published classes).
+ * @param {string} label
+ * @returns {string|null}
+ */
+function getVariantFromLabel(label) {
+  const normalized = label.toLowerCase().trim();
+  const match = VARIANT_LABELS.find(([text]) => text === normalized);
+  return match ? match[1] : null;
+}
+
 /**
  * Turns `:iconname:` tokens in a button into `span.icon` (DA and UE text).
  * @param {Element} root
@@ -184,6 +207,8 @@ function getButtonVariant(a, strong, em) {
     a.classList.contains(variant) || a.classList.contains(`button--${variant}`)
   ));
   if (fromClass) return fromClass;
+  const fromLabel = getVariantFromLabel(getButtonLabel(a));
+  if (fromLabel) return fromLabel;
   if (a.classList.contains('accent')) return 'primary';
   if (strong && em) return 'primary';
   if (strong) return 'primary';
