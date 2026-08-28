@@ -77,9 +77,11 @@
           "name": "link",
           "label": "Link",
           "valueType": "string",
-          "description": "Select a page from this site.",
+          "value": "",
+          "multi": false,
+          "description": "Select a page from this site (not DAM assets).",
           "validation": {
-            "rootPath": "/content/aem-eds-acl"
+            "rootPath": "/content/aem-eds-acl/"
           }
         },
         {
@@ -138,11 +140,11 @@
           }
         },
         {
-          "component": "select",
+          "component": "multiselect",
           "name": "classes",
           "label": "Shape",
           "valueType": "string",
-          "value": "",
+          "maxSize": 1,
           "description": "Default uses 8px radius. Rounded is the pill shape. Size follows the viewport (Small / Default / Large / Extra-Large).",
           "options": [
             {

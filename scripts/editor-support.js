@@ -8,7 +8,7 @@ import {
   loadSections,
 } from './aem.js';
 import { decorateRichtext } from './editor-support-rte.js';
-import { decorateMain, decorateButtons } from './scripts.js';
+import { decorateMain, decorateButtons, applyButtonPatchFromUe } from './scripts.js';
 
 async function applyChanges(event) {
   // redecorate default content and blocks on patches (in the properties rail)
@@ -80,6 +80,7 @@ async function applyChanges(event) {
           newSection.style.display = null;
         } else {
           element.replaceWith(...newElements);
+          newElements.forEach((el) => applyButtonPatchFromUe(el, detail?.patch));
           decorateButtons(parentElement);
           decorateIcons(parentElement);
           decorateRichtext(parentElement);

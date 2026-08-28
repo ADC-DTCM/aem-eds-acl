@@ -88,7 +88,7 @@ const BUTTON_MODIFIERS = [
   'disabled',
 ];
 
-const MODIFIER_TEXT_VALUES = new Set(['round', 'new-tab', 'disabled']);
+const MODIFIER_TEXT_VALUES = new Set(['round', 'rounded', 'new-tab', 'disabled']);
 
 const RESERVED_ICON_CLASSES = new Set(['icon-left', 'icon-right', 'icon-only']);
 
@@ -235,6 +235,71 @@ function getButtonVariant(a, strong, em) {
   return null;
 }
 
+function toUePropAttr(name) {
+  return name.replace(/([A-Z])/g, '-$1').toLowerCase();
+}
+
+/**
+ * Adds modifier tokens from a classes/shape value (string, CSV, or JSON array).
+ * @param {unknown} raw
+ * @param {Set<string>} found
+ */
+function ingestModifierValue(raw, found) {
+  if (raw == null || raw === '') return;
+  let tokens = [];
+  if (Array.isArray(raw)) {
+    tokens = raw;
+  } else {
+    const str = String(raw).trim();
+    if (str.startsWith('[')) {
+      try {
+        tokens = JSON.parse(str);
+      } catch {
+        tokens = str.split(/[\s,]+/);
+      }
+    } else {
+      tokens = str.split(/[\s,]+/);
+    }
+  }
+  tokens.forEach((cls) => {
+    const normalized = String(cls).trim().toLowerCase();
+    if (normalized === 'rounded') found.add('round');
+    else if (BUTTON_MODIFIERS.includes(normalized)) found.add(normalized);
+  });
+}
+
+/**
+ * Applies a UE property-panel patch to button containers before decoration.
+ * @param {Element} root
+ * @param {{ name?: string, value?: unknown }} patch
+ */
+export function applyButtonPatchFromUe(root, patch) {
+  if (!root?.querySelector && !root?.matches) return;
+  if (!patch?.name) return;
+  const prop = toUePropAttr(patch.name);
+  const targets = root.matches?.('[data-aue-model="button"]')
+    ? [root]
+    : [...(root.querySelectorAll?.('[data-aue-model="button"]') || [])];
+  if (!targets.length) return;
+
+  if (patch.value == null || patch.value === '') {
+    targets.forEach((button) => {
+      button.removeAttribute(`data-aue-prop-${prop}`);
+      button.querySelector('a[href]')?.removeAttribute(`data-aue-prop-${prop}`);
+    });
+    return;
+  }
+
+  const value = Array.isArray(patch.value)
+    ? patch.value.filter(Boolean).join(' ')
+    : String(patch.value);
+
+  targets.forEach((button) => {
+    button.setAttribute(`data-aue-prop-${prop}`, value);
+    button.querySelector('a[href]')?.setAttribute(`data-aue-prop-${prop}`, value);
+  });
+}
+
 /**
  * Reads a UE property from data attributes (supports camelCase dataset keys).
  * @param {Element} el
@@ -262,19 +327,18 @@ function collectButtonModifiers(el, found) {
     }
   });
 
-  // Legacy multiselect / grouped `classes_*` fields.
-  const classesProp = readUeProp(el, 'classes');
-  if (classesProp) {
-    classesProp.split(/[\s,]+/).forEach((cls) => {
-      const normalized = cls.trim().toLowerCase();
-      if (BUTTON_MODIFIERS.includes(normalized)) found.add(normalized);
-    });
-  }
+  // Shape / Options from UE (`classes` multiselect, booleans, or patch props).
+  ingestModifierValue(readUeProp(el, 'classes'), found);
+
+  [...el.attributes].forEach(({ name, value }) => {
+    if (name.startsWith('data-aue-prop-') && name.includes('classes')) {
+      ingestModifierValue(value, found);
+    }
+  });
 
   if (readUeProp(el, 'classes-shape') === 'round' || readUeProp(el, 'classes_shape') === 'round') {
     found.add('round');
   }
-  if (readUeProp(el, 'classes') === 'round') found.add('round');
 
   // Legacy grouped booleans (classes_disabled, classes_new-tab).
   if (readUeProp(el, 'classes-disabled') === 'true' || readUeProp(el, 'classes_disabled') === 'true') {
@@ -312,7 +376,10 @@ function harvestModifierTextNodes(a, p, found) {
     if (node === a) return;
     if (node.nodeType === Node.TEXT_NODE) {
       const text = node.textContent?.trim().toLowerCase();
-      if (text && MODIFIER_TEXT_VALUES.has(text)) {
+      if (text === 'rounded') {
+        found.add('round');
+        node.remove();
+      } else if (text && MODIFIER_TEXT_VALUES.has(text)) {
         found.add(text);
         node.remove();
       }
