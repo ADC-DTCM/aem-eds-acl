@@ -197,6 +197,20 @@ function getButtonLabel(el) {
   return clone.textContent.replace(/\s+/g, ' ').trim();
 }
 
+/**
+ * Label-based variant for UE buttons when props are not hydrated yet on reload.
+ * Skips "Primary" because that is common button copy, not a reliable Variation signal.
+ * @param {HTMLAnchorElement} a
+ * @returns {string|null}
+ */
+function getUeLabelVariant(a) {
+  const fromTitle = getVariantFromLabel(a.getAttribute('title') || '');
+  if (fromTitle && fromTitle !== 'primary') return fromTitle;
+  const fromLabel = getVariantFromLabel(getButtonLabel(a));
+  if (fromLabel && fromLabel !== 'primary') return fromLabel;
+  return null;
+}
+
 function getButtonUeContainer(a) {
   return a.closest('[data-aue-model="button"]') || a.closest('.button-wrapper') || a.closest('p');
 }
@@ -269,8 +283,10 @@ function getButtonVariant(a, strong, em) {
   ));
   if (fromClass) return fromClass;
 
-  // UE button link text (e.g. "Primary") must not override the Variation field.
-  if (!isUeButtonComponent(a)) {
+  if (isUeButtonComponent(a)) {
+    const fromUeLabel = getUeLabelVariant(a);
+    if (fromUeLabel) return fromUeLabel;
+  } else {
     const fromTitle = getVariantFromLabel(a.getAttribute('title') || '');
     if (fromTitle) return fromTitle;
 
@@ -282,7 +298,6 @@ function getButtonVariant(a, strong, em) {
   if (strong && em) return 'primary';
   if (strong) return 'primary';
   if (em) return 'secondary';
-  // UE buttons default to primary until data-aue-prop-linktype is hydrated on reload.
   if (a.classList.contains('button') || isUeButtonComponent(a)) return 'primary';
   return null;
 }
@@ -671,6 +686,14 @@ function primeButtonProps(main) {
     if (!anchor || primed.has(anchor)) return;
     primed.add(anchor);
     applyStoredButtonProps(container, anchor);
+
+    const linkType = readUeProp(container, 'linktype') || readUeProp(anchor, 'linktype');
+    if (!linkType) {
+      const strong = anchor.closest('strong');
+      const em = anchor.closest('em');
+      const inferred = getButtonVariant(anchor, strong, em);
+      if (inferred) syncAnchorFromPatch(anchor, 'linkType', inferred);
+    }
   };
 
   main.querySelectorAll('[data-aue-model="button"]').forEach((container) => {
@@ -687,6 +710,19 @@ function primeButtonProps(main) {
   });
 }
 
+function unwrapButtonFormatting(a) {
+  const strong = a.closest('strong');
+  const em = a.closest('em');
+  if (strong && em) {
+    const outer = strong.contains(em) ? strong : em;
+    outer.replaceWith(a);
+  } else if (strong) {
+    strong.replaceWith(a);
+  } else if (em) {
+    em.replaceWith(a);
+  }
+}
+
 /**
  * Applies BEM aliases, icon placement, new-tab, and disabled behavior.
  * Safe to re-run on already-published Franklin/UE buttons
@@ -698,7 +734,9 @@ function primeButtonProps(main) {
  * @param {string[]} [precomputed.modifiers]
  */
 function applyButtonChrome(a, p, precomputed = {}) {
-  const variant = precomputed.variant ?? getButtonVariant(a, null, null);
+  const strong = a.closest('strong');
+  const em = a.closest('em');
+  const variant = precomputed.variant ?? getButtonVariant(a, strong, em);
   const modifiers = precomputed.modifiers ?? getButtonModifiers(a, p);
 
   BUTTON_MODIFIERS.forEach((mod) => {
@@ -783,6 +821,7 @@ export function decorateButtons(main) {
         a.classList.add('button');
       }
       applyButtonChrome(a, p);
+      unwrapButtonFormatting(a);
       return;
     }
 
@@ -815,14 +854,7 @@ export function decorateButtons(main) {
       modifiers,
     });
 
-    if (strong && em) {
-      const outer = strong.contains(em) ? strong : em;
-      outer.replaceWith(a);
-    } else if (strong) {
-      strong.replaceWith(a);
-    } else if (em) {
-      em.replaceWith(a);
-    }
+    unwrapButtonFormatting(a);
   });
 }
 

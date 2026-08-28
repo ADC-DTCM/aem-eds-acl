@@ -160,7 +160,7 @@ function scheduleButtonDecorate() {
   const main = document.querySelector('main');
   if (!main) return;
   decorateButtons(main);
-  [50, 250, 1000, 2500].forEach((ms) => {
+  [50, 250, 1000, 2500, 5000, 10000].forEach((ms) => {
     window.setTimeout(() => decorateButtons(main), ms);
   });
 }
@@ -170,7 +170,12 @@ scheduleButtonDecorate();
 const buttonPropObserver = new MutationObserver((mutations) => {
   const main = document.querySelector('main');
   if (!main) return;
-  const shouldDecorate = mutations.some(({ target, attributeName, type }) => {
+  const shouldDecorate = mutations.some((mutation) => {
+    if (mutation.type === 'childList') {
+      return [...mutation.addedNodes].some((node) => node.nodeType === Node.ELEMENT_NODE
+        && (node.matches?.('[data-aue-model="button"]') || node.querySelector?.('[data-aue-model="button"]')));
+    }
+    const { target, attributeName, type } = mutation;
     if (type !== 'attributes' || !attributeName) return false;
     if (attributeName === 'data-aue-model' && target.getAttribute('data-aue-model') === 'button') {
       return true;
@@ -186,6 +191,7 @@ const observeRoot = document.querySelector('main') || document.body;
 if (observeRoot) {
   buttonPropObserver.observe(observeRoot, {
     attributes: true,
+    childList: true,
     subtree: true,
     attributeFilter: BUTTON_UE_ATTRS,
   });
