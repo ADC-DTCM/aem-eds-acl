@@ -253,7 +253,7 @@ function collectButtonModifiers(el, found) {
     }
   });
 
-  // Legacy multiselect `classes` field (round, new-tab, disabled).
+  // Legacy multiselect / grouped `classes_*` fields.
   const classesProp = readUeProp(el, 'classes');
   if (classesProp) {
     classesProp.split(/[\s,]+/).forEach((cls) => {
@@ -262,17 +262,23 @@ function collectButtonModifiers(el, found) {
     });
   }
 
-  // Grouped fields: classes_shape (legacy), classes_new-tab / classes_disabled (boolean).
-  const shape = readUeProp(el, 'classes-shape')
-    || readUeProp(el, 'classes_shape')
-    || readUeProp(el, 'classes');
-  if (shape === 'round') found.add('round');
+  if (readUeProp(el, 'classes-shape') === 'round' || readUeProp(el, 'classes_shape') === 'round') {
+    found.add('round');
+  }
+  if (readUeProp(el, 'classes') === 'round') found.add('round');
 
+  // Legacy grouped booleans (classes_disabled, classes_new-tab).
+  if (readUeProp(el, 'classes-disabled') === 'true' || readUeProp(el, 'classes_disabled') === 'true') {
+    found.add('disabled');
+  }
   if (readUeProp(el, 'classes-new-tab') === 'true' || readUeProp(el, 'classes_new-tab') === 'true') {
     found.add('new-tab');
   }
-  if (readUeProp(el, 'classes-disabled') === 'true' || readUeProp(el, 'classes_disabled') === 'true') {
-    found.add('disabled');
+
+  // Button model booleans (persist in UE and publish as data attributes).
+  if (readUeProp(el, 'disabled') === 'true') found.add('disabled');
+  if (readUeProp(el, 'open-in-new-tab') === 'true' || readUeProp(el, 'openInNewTab') === 'true') {
+    found.add('new-tab');
   }
 }
 

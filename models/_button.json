@@ -9,7 +9,10 @@
             "resourceType": "core/franklin/components/button/v1/button",
             "template": {
               "model": "button",
-              "linkType": "primary"
+              "linkType": "primary",
+              "classes": "",
+              "disabled": false,
+              "openInNewTab": false
             }
           }
         }
@@ -19,6 +22,17 @@
   "models": [
     {
       "id": "button",
+      "modelFields": [
+        "linkType",
+        "link",
+        "linkText",
+        "linkTitle",
+        "icon",
+        "iconPosition",
+        "classes",
+        "disabled",
+        "openInNewTab"
+      ],
       "fields": [
         {
           "component": "select",
@@ -62,7 +76,11 @@
           "component": "aem-content",
           "name": "link",
           "label": "Link",
-          "valueType": "string"
+          "valueType": "string",
+          "description": "Select a page from this site.",
+          "validation": {
+            "rootPath": "/content/aem-eds-acl"
+          }
         },
         {
           "component": "text",
@@ -139,14 +157,14 @@
         },
         {
           "component": "boolean",
-          "name": "classes_new-tab",
+          "name": "openInNewTab",
           "label": "Open in new tab",
           "valueType": "boolean",
           "value": false
         },
         {
           "component": "boolean",
-          "name": "classes_disabled",
+          "name": "disabled",
           "label": "Disabled",
           "valueType": "boolean",
           "value": false
