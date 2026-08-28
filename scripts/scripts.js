@@ -254,11 +254,6 @@ function isUeButtonComponent(a) {
  * @returns {string|null}
  */
 function getButtonVariant(a, strong, em) {
-  const fromClass = BUTTON_VARIANTS.find((variant) => (
-    a.classList.contains(variant) || a.classList.contains(`button--${variant}`)
-  ));
-  if (fromClass) return fromClass;
-
   const container = getButtonUeContainer(a);
   const linkTypeAttr = readUeProp(a, 'linktype')
     || readUeProp(a, 'link-type')
@@ -266,7 +261,13 @@ function getButtonVariant(a, strong, em) {
     || readUeProp(container, 'link-type')
     || a.getAttribute('data-linktype')
     || a.dataset?.linkType;
+  // UE Variation field wins over stale decoration classes (e.g. leftover `primary`).
   if (linkTypeAttr && BUTTON_VARIANTS.includes(linkTypeAttr)) return linkTypeAttr;
+
+  const fromClass = BUTTON_VARIANTS.find((variant) => (
+    a.classList.contains(variant) || a.classList.contains(`button--${variant}`)
+  ));
+  if (fromClass) return fromClass;
 
   // UE button link text (e.g. "Primary") must not override the Variation field.
   if (!isUeButtonComponent(a)) {
@@ -394,6 +395,18 @@ function syncAnchorFromPatch(anchor, prop, rawValue) {
       if (found.has(mod)) anchor.classList.add(mod, `button--${mod}`);
       else anchor.classList.remove(mod, `button--${mod}`);
     });
+    if (found.has('disabled')) {
+      if (anchor.dataset.buttonDisabled !== 'true') {
+        anchor.dataset.buttonDisabled = 'true';
+        anchor.setAttribute('aria-disabled', 'true');
+        anchor.setAttribute('tabindex', '-1');
+        anchor.addEventListener('click', (event) => event.preventDefault());
+      }
+    } else {
+      delete anchor.dataset.buttonDisabled;
+      anchor.removeAttribute('aria-disabled');
+      anchor.removeAttribute('tabindex');
+    }
     if (found.has('new-tab')) {
       anchor.target = '_blank';
       anchor.rel = 'noopener noreferrer';
@@ -434,6 +447,16 @@ function syncAnchorFromPatch(anchor, prop, rawValue) {
 }
 
 /**
+ * Resolves classes patch value. UE multiselect sends the full selection — replace, do not union.
+ * @param {unknown} incoming
+ * @returns {unknown}
+ */
+function resolveClassesPatchValue(incoming) {
+  if (incoming == null || incoming === '') return '';
+  return incoming;
+}
+
+/**
  * Applies a UE property-panel patch to button containers before decoration.
  * @param {Element} root
  * @param {{ name?: string, value?: unknown }} patch
@@ -445,7 +468,10 @@ export function applyButtonPatchFromUe(root, patch) {
   const targets = findButtonContainers(root);
   if (!targets.length) return;
 
-  const value = serializePatchValue(patch.value);
+  const patchValue = patch.name === 'classes'
+    ? resolveClassesPatchValue(patch.value)
+    : patch.value;
+  const value = serializePatchValue(patchValue);
   const isEmpty = value == null;
 
   targets.forEach((button) => {
@@ -457,7 +483,7 @@ export function applyButtonPatchFromUe(root, patch) {
       button.setAttribute(`data-aue-prop-${prop}`, value);
       anchor?.setAttribute(`data-aue-prop-${prop}`, value);
     }
-    syncAnchorFromPatch(anchor, patch.name, patch.value);
+    syncAnchorFromPatch(anchor, patch.name, isEmpty && patch.name === 'classes' ? '' : patchValue);
 
     // Partial UE patches must not drop other stored button props.
     if (patch.name !== 'classes') {
@@ -472,19 +498,6 @@ export function applyButtonPatchFromUe(root, patch) {
 }
 
 /**
- * Merges multiselect classes patch values (UE may send only the toggled option).
- * @param {string|null|undefined} existing
- * @param {unknown} incoming
- * @returns {string}
- */
-function mergeClassesPatch(existing, incoming) {
-  const merged = new Set();
-  ingestModifierValue(existing, merged);
-  ingestModifierValue(incoming, merged);
-  return [...merged].join(' ');
-}
-
-/**
  * Applies all persisted data-aue-prop-* values onto the live button anchor.
  * @param {Element} container
  * @param {HTMLAnchorElement|null} anchor
@@ -493,10 +506,10 @@ function applyStoredButtonProps(container, anchor) {
   if (!anchor) return;
 
   const linkType = readUeProp(container, 'linktype') || readUeProp(anchor, 'linktype');
-  if (linkType) syncAnchorFromPatch(anchor, 'linkType', linkType);
+  syncAnchorFromPatch(anchor, 'linkType', linkType || '');
 
   const classes = readUeProp(container, 'classes') || readUeProp(anchor, 'classes');
-  if (classes) syncAnchorFromPatch(anchor, 'classes', classes);
+  syncAnchorFromPatch(anchor, 'classes', classes || '');
 
   container.classList.add('button-wrapper');
   anchor.classList.add('button');
@@ -531,14 +544,6 @@ export function mergeButtonUeState(from, to) {
 
   if (fromAnchor && toAnchor) {
     copyProps(fromAnchor, toAnchor);
-  }
-
-  const fromClasses = readUeProp(fromContainer, 'classes') || readUeProp(fromAnchor, 'classes');
-  const toClasses = readUeProp(toContainer, 'classes') || readUeProp(toAnchor, 'classes');
-  const mergedClasses = mergeClassesPatch(fromClasses, toClasses);
-  if (mergedClasses) {
-    toContainer.setAttribute('data-aue-prop-classes', mergedClasses);
-    toAnchor?.setAttribute('data-aue-prop-classes', mergedClasses);
   }
 
   if (fromContainer.classList.contains('button-wrapper')) {
@@ -633,6 +638,16 @@ function harvestModifierTextNodes(a, p, found) {
  * @returns {string[]}
  */
 function getButtonModifiers(a, p) {
+  const container = a.closest('[data-aue-model="button"]');
+  const hasClassesProp = container?.hasAttribute('data-aue-prop-classes')
+    || a.hasAttribute('data-aue-prop-classes')
+    || p?.hasAttribute('data-aue-prop-classes');
+  if (container && hasClassesProp) {
+    const found = new Set();
+    ingestModifierValue(readUeProp(container, 'classes') || readUeProp(a, 'classes') || readUeProp(p, 'classes'), found);
+    return BUTTON_MODIFIERS.filter((mod) => found.has(mod));
+  }
+
   const found = new Set();
   collectButtonModifiers(a, found);
   collectButtonModifiers(p, found);
