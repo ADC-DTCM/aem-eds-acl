@@ -207,28 +207,87 @@ function getButtonVariant(a, strong, em) {
     a.classList.contains(variant) || a.classList.contains(`button--${variant}`)
   ));
   if (fromClass) return fromClass;
+
+  const linkTypeAttr = a.getAttribute('data-aue-prop-linktype')
+    || a.getAttribute('data-linktype')
+    || a.dataset?.linkType;
+  if (linkTypeAttr && BUTTON_VARIANTS.includes(linkTypeAttr)) return linkTypeAttr;
+
   const fromLabel = getVariantFromLabel(getButtonLabel(a));
   if (fromLabel) return fromLabel;
   if (a.classList.contains('accent')) return 'primary';
   if (strong && em) return 'primary';
   if (strong) return 'primary';
   if (em) return 'secondary';
+  // UE buttons default to primary; Options (e.g. round) must not drop the variant.
+  if (a.classList.contains('button')) return 'primary';
   return null;
 }
 
 /**
- * Collects modifier class names from the link and its paragraph.
+ * Reads a UE property from data attributes (supports camelCase dataset keys).
+ * @param {Element} el
+ * @param {string} prop
+ * @returns {string|null}
+ */
+function readUeProp(el, prop) {
+  const attr = el.getAttribute(`data-aue-prop-${prop}`);
+  if (attr != null && attr !== '') return attr;
+  const camel = prop.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+  const fromDataset = el.dataset?.[camel];
+  return fromDataset != null && fromDataset !== '' ? fromDataset : null;
+}
+
+/**
+ * Adds modifier hits from classes or UE grouped `classes_*` fields.
+ * @param {Element|null} el
+ * @param {Set<string>} found
+ */
+function collectButtonModifiers(el, found) {
+  if (!el?.classList) return;
+  BUTTON_MODIFIERS.forEach((mod) => {
+    if (el.classList.contains(mod) || el.classList.contains(`button--${mod}`)) {
+      found.add(mod);
+    }
+  });
+
+  // Legacy multiselect `classes` field (round, new-tab, disabled).
+  const classesProp = readUeProp(el, 'classes');
+  if (classesProp) {
+    classesProp.split(/[\s,]+/).forEach((cls) => {
+      const normalized = cls.trim().toLowerCase();
+      if (BUTTON_MODIFIERS.includes(normalized)) found.add(normalized);
+    });
+  }
+
+  // Grouped fields: classes_shape (select), classes_new-tab / classes_disabled (boolean).
+  const shape = readUeProp(el, 'classes-shape') || readUeProp(el, 'classes_shape');
+  if (shape === 'round') found.add('round');
+
+  if (readUeProp(el, 'classes-new-tab') === 'true' || readUeProp(el, 'classes_new-tab') === 'true') {
+    found.add('new-tab');
+  }
+  if (readUeProp(el, 'classes-disabled') === 'true' || readUeProp(el, 'classes_disabled') === 'true') {
+    found.add('disabled');
+  }
+}
+
+/**
+ * Collects modifier class names from the link, paragraph, and nearby wrappers.
  * @param {HTMLAnchorElement} a
  * @param {HTMLParagraphElement} p
  * @returns {string[]}
  */
 function getButtonModifiers(a, p) {
-  return BUTTON_MODIFIERS.filter((mod) => (
-    a.classList.contains(mod)
-    || a.classList.contains(`button--${mod}`)
-    || p.classList.contains(mod)
-    || p.classList.contains(`button--${mod}`)
-  ));
+  const found = new Set();
+  collectButtonModifiers(a, found);
+  collectButtonModifiers(p, found);
+  let ancestor = p?.parentElement;
+  for (let depth = 0; ancestor && depth < 4; depth += 1) {
+    collectButtonModifiers(ancestor, found);
+    ancestor = ancestor.parentElement;
+  }
+  return BUTTON_MODIFIERS.filter((mod) => found.has(mod));
 }
 
 /**
@@ -328,8 +387,8 @@ export function decorateButtons(main) {
 
     const modifiers = getButtonModifiers(a, p);
 
-    p.className = 'button-wrapper';
-    a.className = 'button';
+    p.classList.add('button-wrapper');
+    a.classList.add('button');
     applyButtonChrome(a, p, {
       variant: resolvedVariant,
       modifiers,
