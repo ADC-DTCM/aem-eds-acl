@@ -570,7 +570,16 @@ function harvestModifierTextNodes(a, p, found) {
  * @returns {string[]}
  */
 function getButtonModifiers(a, p) {
-  const found = new Set();
+  const found = new Set(
+    BUTTON_MODIFIERS.filter((mod) => (
+      a.classList.contains(mod)
+      || a.classList.contains(`button--${mod}`)
+      || p.classList.contains(mod)
+      || p.classList.contains(`button--${mod}`)
+    )),
+  );
+
+  // Author canvas: UE props and grouped-field aliases (not in published HTML).
   collectButtonModifiers(a, found);
   collectButtonModifiers(p, found);
   const ueContainer = getButtonUeContainer(a);
@@ -578,6 +587,7 @@ function getButtonModifiers(a, p) {
     collectButtonModifiers(ueContainer, found);
   }
   harvestModifierTextNodes(a, p, found);
+
   return BUTTON_MODIFIERS.filter((mod) => found.has(mod));
 }
 
@@ -595,23 +605,7 @@ function applyButtonChrome(a, p, precomputed = {}) {
   const variant = precomputed.variant ?? getButtonVariant(a, null, null);
   const modifiers = precomputed.modifiers ?? getButtonModifiers(a, p);
 
-  BUTTON_MODIFIERS.forEach((mod) => {
-    a.classList.remove(mod, `button--${mod}`);
-  });
-  if (!modifiers.includes('new-tab')) {
-    a.removeAttribute('target');
-    a.removeAttribute('rel');
-  }
-  if (!modifiers.includes('disabled')) {
-    delete a.dataset.buttonDisabled;
-    a.removeAttribute('aria-disabled');
-    a.removeAttribute('tabindex');
-  }
-
-  if (variant) {
-    BUTTON_VARIANTS.forEach((v) => a.classList.remove(v, `button--${v}`));
-    a.classList.add(variant, `button--${variant}`);
-  }
+  if (variant) a.classList.add(variant, `button--${variant}`);
   modifiers.forEach((mod) => {
     a.classList.add(mod, `button--${mod}`);
   });
