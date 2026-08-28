@@ -197,6 +197,10 @@ function getButtonLabel(el) {
   return clone.textContent.replace(/\s+/g, ' ').trim();
 }
 
+function getButtonUeContainer(a) {
+  return a.closest('[data-aue-model="button"]') || a.closest('.button-wrapper') || a.closest('p');
+}
+
 /**
  * Resolves the button variation from classes or DA formatting (bold/italic).
  * @param {HTMLAnchorElement} a
@@ -210,10 +214,15 @@ function getButtonVariant(a, strong, em) {
   ));
   if (fromClass) return fromClass;
 
-  const linkTypeAttr = a.getAttribute('data-aue-prop-linktype')
+  const container = getButtonUeContainer(a);
+  const linkTypeAttr = readUeProp(a, 'linktype')
+    || readUeProp(container, 'linktype')
     || a.getAttribute('data-linktype')
     || a.dataset?.linkType;
   if (linkTypeAttr && BUTTON_VARIANTS.includes(linkTypeAttr)) return linkTypeAttr;
+
+  const fromTitle = getVariantFromLabel(a.getAttribute('title') || '');
+  if (fromTitle) return fromTitle;
 
   const fromLabel = getVariantFromLabel(getButtonLabel(a));
   if (fromLabel) return fromLabel;
