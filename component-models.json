@@ -196,29 +196,33 @@
       {
         "component": "multiselect",
         "name": "classes",
-        "label": "Shape",
+        "label": "Shape & Options",
         "valueType": "string",
-        "description": "Default uses 8px radius. Select Rounded for the pill shape. Size follows the viewport (Small / Default / Large / Extra-Large).",
+        "description": "Default shape uses 8px radius. Rounded is the pill shape. Size follows the viewport (Small / Default / Large / Extra-Large).",
         "options": [
           {
-            "name": "Rounded",
-            "value": "round"
+            "name": "Shape",
+            "children": [
+              {
+                "name": "Rounded",
+                "value": "round"
+              }
+            ]
+          },
+          {
+            "name": "Options",
+            "children": [
+              {
+                "name": "Open in new tab",
+                "value": "new-tab"
+              },
+              {
+                "name": "Disabled",
+                "value": "disabled"
+              }
+            ]
           }
         ]
-      },
-      {
-        "component": "boolean",
-        "name": "openInNewTab",
-        "label": "Open in new tab",
-        "valueType": "boolean",
-        "value": false
-      },
-      {
-        "component": "boolean",
-        "name": "disabled",
-        "label": "Disabled",
-        "valueType": "boolean",
-        "value": false
       }
     ]
   },

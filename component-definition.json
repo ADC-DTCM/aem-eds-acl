@@ -53,9 +53,7 @@
                 "resourceType": "core/franklin/components/button/v1/button",
                 "template": {
                   "model": "button",
-                  "linkType": "primary",
-                  "disabled": false,
-                  "openInNewTab": false
+                  "linkType": "primary"
                 }
               }
             }

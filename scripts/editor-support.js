@@ -13,11 +13,22 @@ import {
   decorateButtons,
   applyButtonPatchFromUe,
   applyButtonLivePatch,
+  applyButtonInstrumentation,
   getButtonPatchFromEvent,
   mergeButtonUeState,
 } from './scripts.js';
 
 let promiseChanges$ = Promise.resolve();
+let buttonDecorateScheduled = false;
+
+function scheduleButtonInstrumentation() {
+  if (buttonDecorateScheduled) return;
+  buttonDecorateScheduled = true;
+  requestAnimationFrame(() => {
+    buttonDecorateScheduled = false;
+    applyButtonInstrumentation(document);
+  });
+}
 
 /**
  * Re-applies a patch to the patched resource only, then redecorates its section.
@@ -141,6 +152,7 @@ function attachEventListners(main) {
 }
 
 attachEventListners(document.querySelector('main'));
+scheduleButtonInstrumentation();
 
 // decorate rich text
 // this has to happen after decorateMain(), and everythime decorateBlocks() is called
@@ -149,3 +161,16 @@ decorateRichtext();
 // for new richtext-instrumented elements. this happens for example when using experimentation.
 const observer = new MutationObserver(() => decorateRichtext());
 observer.observe(document, { attributeFilter: ['data-richtext-prop'], subtree: true });
+
+// Re-decorate buttons when UE writes persisted props after reload (data-aue-prop-*).
+const buttonObserver = new MutationObserver(() => scheduleButtonInstrumentation());
+buttonObserver.observe(document, {
+  attributeFilter: [
+    'data-aue-prop-classes',
+    'data-aue-prop-linktype',
+    'data-aue-prop-disabled',
+    'data-aue-prop-open-in-new-tab',
+    'data-aue-model',
+  ],
+  subtree: true,
+});

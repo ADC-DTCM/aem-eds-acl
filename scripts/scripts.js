@@ -701,6 +701,54 @@ export function decorateButtons(main) {
   });
 }
 
+/** Props stored on instrumented button nodes that must be applied before decoration. */
+const BUTTON_STORED_PROPS = [
+  ['classes', 'classes'],
+  ['linktype', 'linkType'],
+  ['disabled', 'disabled'],
+  ['open-in-new-tab', 'openInNewTab'],
+];
+
+/**
+ * Applies persisted UE props from data-aue-prop-* onto the button anchor.
+ * @param {Element} container
+ * @param {HTMLAnchorElement} anchor
+ */
+function applyStoredButtonProps(container, anchor) {
+  BUTTON_STORED_PROPS.forEach(([prop, patchName]) => {
+    const value = readUeProp(container, prop) || readUeProp(anchor, prop);
+    if (value == null || value === '') return;
+    if (prop === 'disabled' || prop === 'open-in-new-tab') {
+      syncAnchorFromPatch(anchor, patchName, value === 'true');
+      return;
+    }
+    syncAnchorFromPatch(anchor, patchName, value);
+  });
+}
+
+/**
+ * Re-decorates buttons after UE adds data-aue-prop-* on load or reload.
+ * @param {Document|Element} [root]
+ */
+export function applyButtonInstrumentation(root = document) {
+  const main = root.querySelector?.('main') || (root.matches?.('main') ? root : null);
+  if (!main) return;
+
+  main.querySelectorAll('[data-aue-model="button"]').forEach((container) => {
+    const anchor = container.querySelector('a[href]');
+    if (anchor) applyStoredButtonProps(container, anchor);
+  });
+
+  main.querySelectorAll('[data-aue-prop-classes], [data-aue-prop-linktype], [data-aue-prop-disabled], [data-aue-prop-open-in-new-tab]').forEach((el) => {
+    const container = findButtonContainers(el)[0];
+    if (!container) return;
+    const anchor = container.querySelector('a[href]') || (el.matches('a[href]') ? el : null);
+    if (anchor) applyStoredButtonProps(container, anchor);
+  });
+
+  decorateButtons(main);
+}
+
 /**
  * Applies a live UE patch to the in-canvas button and redecorates nearby content.
  * @param {CustomEvent} event
