@@ -20,14 +20,4 @@ module.exports = {
     'no-param-reassign': [2, { props: false }], // allow modifying properties of param
     'xwalk/max-cells': 'off',
   },
-  overrides: [
-    {
-      files: ['tools/build-tokens.mjs'],
-      env: { node: true },
-      rules: {
-        'no-console': 'off',
-        'import/extensions': 'off',
-      },
-    },
-  ],
 };
